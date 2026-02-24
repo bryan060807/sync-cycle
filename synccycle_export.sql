@@ -1,0 +1,950 @@
+--
+-- PostgreSQL database dump
+--
+
+\restrict ZkS9lnbGldTxEKQ3ywXn0cNm0XFOmSkebgwhcpLTvdp93EsuTdde5axEdO9wZkP
+
+-- Dumped from database version 16.10
+-- Dumped by pg_dump version 16.10
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: bills; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.bills (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    user_id character varying NOT NULL,
+    name text NOT NULL,
+    amount real NOT NULL,
+    cadence character varying(20) DEFAULT 'monthly'::character varying NOT NULL,
+    due_day integer,
+    category character varying(30),
+    autopay boolean DEFAULT false,
+    active boolean DEFAULT true,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: crisis_plans; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.crisis_plans (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    user_id character varying NOT NULL,
+    triggers jsonb DEFAULT '[]'::jsonb,
+    deescalation jsonb DEFAULT '[]'::jsonb,
+    immediate_actions jsonb DEFAULT '[]'::jsonb,
+    contact text,
+    updated_at timestamp without time zone DEFAULT now(),
+    coping_strategies jsonb DEFAULT '[]'::jsonb,
+    safe_word text,
+    secondary_contact text
+);
+
+
+--
+-- Name: episodes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.episodes (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    user_id character varying NOT NULL,
+    date timestamp without time zone DEFAULT now(),
+    intensity integer NOT NULL,
+    trigger text,
+    notes text,
+    emotion character varying(20),
+    is_contributed boolean DEFAULT false,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: financial_goals; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.financial_goals (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    user_id character varying NOT NULL,
+    title text NOT NULL,
+    target_amount real NOT NULL,
+    current_amount real DEFAULT 0,
+    category character varying(30),
+    archived boolean DEFAULT false,
+    created_at timestamp without time zone DEFAULT now(),
+    goal_type character varying(20) DEFAULT 'savings'::character varying,
+    due_date timestamp without time zone
+);
+
+
+--
+-- Name: forum_comments; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.forum_comments (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    post_id character varying NOT NULL,
+    user_id character varying NOT NULL,
+    content text NOT NULL,
+    anonymous boolean DEFAULT false,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: forum_posts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.forum_posts (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    user_id character varying NOT NULL,
+    title text NOT NULL,
+    content text NOT NULL,
+    category character varying(30),
+    anonymous boolean DEFAULT false,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: goal_tasks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.goal_tasks (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    goal_id character varying NOT NULL,
+    title text NOT NULL,
+    completed boolean DEFAULT false,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: goals; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.goals (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    user_id character varying NOT NULL,
+    title text NOT NULL,
+    progress integer DEFAULT 0 NOT NULL,
+    target_date timestamp without time zone,
+    category character varying(20),
+    assigned_to character varying(10),
+    created_at timestamp without time zone DEFAULT now(),
+    description text,
+    goal_type character varying(20) DEFAULT 'short-term'::character varying,
+    archived boolean DEFAULT false
+);
+
+
+--
+-- Name: health_metrics; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.health_metrics (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    user_id character varying NOT NULL,
+    date timestamp without time zone DEFAULT now(),
+    weight real,
+    bp_systolic integer,
+    bp_diastolic integer,
+    blood_sugar real,
+    notes text,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: income_sources; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.income_sources (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    user_id character varying NOT NULL,
+    name text NOT NULL,
+    amount real NOT NULL,
+    cadence character varying(20) DEFAULT 'monthly'::character varying NOT NULL,
+    active boolean DEFAULT true,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: medications; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.medications (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    user_id character varying NOT NULL,
+    name text NOT NULL,
+    dosage text,
+    schedule text,
+    active boolean DEFAULT true,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: messages; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.messages (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    connection_id character varying NOT NULL,
+    from_user_id character varying NOT NULL,
+    text text NOT NULL,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: partner_alerts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.partner_alerts (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    from_user_id character varying NOT NULL,
+    to_user_id character varying NOT NULL,
+    alert_type character varying(20) NOT NULL,
+    message text,
+    acknowledged boolean DEFAULT false,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: partner_connections; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.partner_connections (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    from_user_id character varying NOT NULL,
+    to_user_id character varying,
+    to_email character varying,
+    to_phone character varying,
+    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: retros; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.retros (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    user_id character varying NOT NULL,
+    date timestamp without time zone DEFAULT now(),
+    went_well text,
+    disconnected text,
+    next_steps text,
+    mood integer,
+    archived boolean DEFAULT false
+);
+
+
+--
+-- Name: sessions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.sessions (
+    sid character varying NOT NULL,
+    sess jsonb NOT NULL,
+    expire timestamp without time zone NOT NULL
+);
+
+
+--
+-- Name: signals; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.signals (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    user_id character varying NOT NULL,
+    status character varying(10) DEFAULT 'green'::character varying NOT NULL,
+    updated_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: spending_settings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.spending_settings (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    user_id character varying NOT NULL,
+    spending_limit real DEFAULT 200,
+    is_spending_sensitive boolean DEFAULT true
+);
+
+
+--
+-- Name: transactions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.transactions (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    user_id character varying NOT NULL,
+    date timestamp without time zone DEFAULT now(),
+    description text NOT NULL,
+    amount real NOT NULL,
+    type character varying(10) NOT NULL,
+    category character varying(50),
+    paid_by character varying(10),
+    created_at timestamp without time zone DEFAULT now(),
+    archived boolean DEFAULT false
+);
+
+
+--
+-- Name: upcoming_expenses; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.upcoming_expenses (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    user_id character varying NOT NULL,
+    name text NOT NULL,
+    amount real NOT NULL,
+    due_date timestamp without time zone,
+    category character varying(30),
+    status character varying(20) DEFAULT 'planned'::character varying NOT NULL,
+    notes text,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.users (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    email character varying,
+    first_name character varying,
+    last_name character varying,
+    profile_image_url character varying,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: wins; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.wins (
+    id character varying DEFAULT gen_random_uuid() NOT NULL,
+    user_id character varying NOT NULL,
+    author character varying(100),
+    text text NOT NULL,
+    date timestamp without time zone DEFAULT now(),
+    archived boolean DEFAULT false
+);
+
+
+--
+-- Data for Name: bills; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.bills (id, user_id, name, amount, cadence, due_day, category, autopay, active, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: crisis_plans; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.crisis_plans (id, user_id, triggers, deescalation, immediate_actions, contact, updated_at, coping_strategies, safe_word, secondary_contact) FROM stdin;
+\.
+
+
+--
+-- Data for Name: episodes; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.episodes (id, user_id, date, intensity, trigger, notes, emotion, is_contributed, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: financial_goals; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.financial_goals (id, user_id, title, target_amount, current_amount, category, archived, created_at, goal_type, due_date) FROM stdin;
+\.
+
+
+--
+-- Data for Name: forum_comments; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.forum_comments (id, post_id, user_id, content, anonymous, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: forum_posts; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.forum_posts (id, user_id, title, content, category, anonymous, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: goal_tasks; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.goal_tasks (id, goal_id, title, completed, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: goals; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.goals (id, user_id, title, progress, target_date, category, assigned_to, created_at, description, goal_type, archived) FROM stdin;
+\.
+
+
+--
+-- Data for Name: health_metrics; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.health_metrics (id, user_id, date, weight, bp_systolic, bp_diastolic, blood_sugar, notes, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: income_sources; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.income_sources (id, user_id, name, amount, cadence, active, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: medications; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.medications (id, user_id, name, dosage, schedule, active, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: messages; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.messages (id, connection_id, from_user_id, text, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: partner_alerts; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.partner_alerts (id, from_user_id, to_user_id, alert_type, message, acknowledged, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: partner_connections; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.partner_connections (id, from_user_id, to_user_id, to_email, to_phone, status, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: retros; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.retros (id, user_id, date, went_well, disconnected, next_steps, mood, archived) FROM stdin;
+\.
+
+
+--
+-- Data for Name: sessions; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.sessions (sid, sess, expire) FROM stdin;
+yW3pHccEy49nHb9RdoWnaM-dUY33tNPd	{"cookie": {"path": "/", "secure": true, "expires": "2026-02-21T11:15:03.851Z", "httpOnly": true, "originalMaxAge": 604800000}, "replit.com": {"code_verifier": "bF7hZ1gxEfT8RQjDC5yHWOxnLtft08JT7QeTV1lTErw"}}	2026-02-21 11:15:04
+bjB8ZfF9eYpj4EJbDp1-RlkBVY1RuvYF	{"cookie": {"path": "/", "secure": true, "expires": "2026-02-24T15:16:05.861Z", "httpOnly": true, "originalMaxAge": 604800000}, "replit.com": {"code_verifier": "2_rbQa-6XG_8NKzzAhmm1hJp0bG2bpS3aceFv1h8ZFA"}}	2026-02-24 15:16:06
+rD6pT46j380na9Ypw_sMeJsb0GxPgWkt	{"cookie": {"path": "/", "secure": true, "expires": "2026-02-24T15:16:08.905Z", "httpOnly": true, "originalMaxAge": 604800000}, "replit.com": {"code_verifier": "FruQzL5X5Jig5XU8D0XoK_oB3lEIpMhDOLYUndxw1fQ"}}	2026-02-24 15:16:09
+ytfcytvAQJCJxVZz9SijBks53HTZmftE	{"cookie": {"path": "/", "secure": true, "expires": "2026-02-21T11:15:32.694Z", "httpOnly": true, "originalMaxAge": 604800000}, "replit.com": {"code_verifier": "1wqUBHHu6WGmKeQBDYbn6xo3UOXW6IZU_2tFD1L46O4"}}	2026-02-21 11:15:33
+ssAqnxokJXxWsg9l0dU1Pa_kxGQ0CMh8	{"cookie": {"path": "/", "secure": true, "expires": "2026-02-24T15:43:05.226Z", "httpOnly": true, "originalMaxAge": 604800000}, "replit.com": {"code_verifier": "4tUGby7avuLngdY6opC2ywT4Td8R_VB-O9O4-V9G6cs"}}	2026-02-24 15:43:06
+0mN1wJrUiNPvx_vQoaThFGDfmz4t6kQ0	{"cookie": {"path": "/", "secure": true, "expires": "2026-02-24T15:43:31.790Z", "httpOnly": true, "originalMaxAge": 604800000}, "replit.com": {"code_verifier": "65nOfiLx_GAgdkzn8P-sfnfc0EurnNm2E5NphgqPcV4"}}	2026-02-24 15:43:32
+X-GhgE-PPzSwDmSz9L-jEgprkdjti70C	{"cookie": {"path": "/", "secure": true, "expires": "2026-02-21T11:16:23.268Z", "httpOnly": true, "originalMaxAge": 604800000}, "replit.com": {"code_verifier": "eRtLCVyOA6GzATQLvSXd0obca6l3LYKN8bKdvWLx4r0"}}	2026-02-21 11:16:24
+\.
+
+
+--
+-- Data for Name: signals; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.signals (id, user_id, status, updated_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: spending_settings; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.spending_settings (id, user_id, spending_limit, is_spending_sensitive) FROM stdin;
+\.
+
+
+--
+-- Data for Name: transactions; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.transactions (id, user_id, date, description, amount, type, category, paid_by, created_at, archived) FROM stdin;
+\.
+
+
+--
+-- Data for Name: upcoming_expenses; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.upcoming_expenses (id, user_id, name, amount, due_date, category, status, notes, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.users (id, email, first_name, last_name, profile_image_url, created_at, updated_at) FROM stdin;
+47328997	bryan060807@gmail.com	AIBRY	\N	https://storage.googleapis.com/replit/images/1769326616224_4a8f0d23cd889f410a0044aee3fc4878.jpeg	2026-01-25 15:52:39.076213	2026-01-25 15:52:39.076213
+\.
+
+
+--
+-- Data for Name: wins; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.wins (id, user_id, author, text, date, archived) FROM stdin;
+\.
+
+
+--
+-- Name: bills bills_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bills
+    ADD CONSTRAINT bills_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: crisis_plans crisis_plans_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.crisis_plans
+    ADD CONSTRAINT crisis_plans_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: crisis_plans crisis_plans_user_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.crisis_plans
+    ADD CONSTRAINT crisis_plans_user_id_unique UNIQUE (user_id);
+
+
+--
+-- Name: episodes episodes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.episodes
+    ADD CONSTRAINT episodes_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: financial_goals financial_goals_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.financial_goals
+    ADD CONSTRAINT financial_goals_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: forum_comments forum_comments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.forum_comments
+    ADD CONSTRAINT forum_comments_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: forum_posts forum_posts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.forum_posts
+    ADD CONSTRAINT forum_posts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: goal_tasks goal_tasks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.goal_tasks
+    ADD CONSTRAINT goal_tasks_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: goals goals_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.goals
+    ADD CONSTRAINT goals_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: health_metrics health_metrics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.health_metrics
+    ADD CONSTRAINT health_metrics_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: income_sources income_sources_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.income_sources
+    ADD CONSTRAINT income_sources_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: medications medications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.medications
+    ADD CONSTRAINT medications_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: messages messages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.messages
+    ADD CONSTRAINT messages_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: partner_alerts partner_alerts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.partner_alerts
+    ADD CONSTRAINT partner_alerts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: partner_connections partner_connections_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.partner_connections
+    ADD CONSTRAINT partner_connections_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: retros retros_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.retros
+    ADD CONSTRAINT retros_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sessions sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sessions
+    ADD CONSTRAINT sessions_pkey PRIMARY KEY (sid);
+
+
+--
+-- Name: signals signals_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.signals
+    ADD CONSTRAINT signals_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: spending_settings spending_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.spending_settings
+    ADD CONSTRAINT spending_settings_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: spending_settings spending_settings_user_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.spending_settings
+    ADD CONSTRAINT spending_settings_user_id_unique UNIQUE (user_id);
+
+
+--
+-- Name: transactions transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transactions
+    ADD CONSTRAINT transactions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: upcoming_expenses upcoming_expenses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.upcoming_expenses
+    ADD CONSTRAINT upcoming_expenses_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users users_email_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_email_unique UNIQUE (email);
+
+
+--
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: wins wins_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.wins
+    ADD CONSTRAINT wins_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: IDX_session_expire; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "IDX_session_expire" ON public.sessions USING btree (expire);
+
+
+--
+-- Name: bills bills_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bills
+    ADD CONSTRAINT bills_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: crisis_plans crisis_plans_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.crisis_plans
+    ADD CONSTRAINT crisis_plans_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: episodes episodes_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.episodes
+    ADD CONSTRAINT episodes_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: financial_goals financial_goals_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.financial_goals
+    ADD CONSTRAINT financial_goals_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: forum_comments forum_comments_post_id_forum_posts_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.forum_comments
+    ADD CONSTRAINT forum_comments_post_id_forum_posts_id_fk FOREIGN KEY (post_id) REFERENCES public.forum_posts(id) ON DELETE CASCADE;
+
+
+--
+-- Name: forum_comments forum_comments_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.forum_comments
+    ADD CONSTRAINT forum_comments_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: forum_posts forum_posts_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.forum_posts
+    ADD CONSTRAINT forum_posts_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: goal_tasks goal_tasks_goal_id_goals_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.goal_tasks
+    ADD CONSTRAINT goal_tasks_goal_id_goals_id_fk FOREIGN KEY (goal_id) REFERENCES public.goals(id) ON DELETE CASCADE;
+
+
+--
+-- Name: goals goals_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.goals
+    ADD CONSTRAINT goals_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: health_metrics health_metrics_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.health_metrics
+    ADD CONSTRAINT health_metrics_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: income_sources income_sources_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.income_sources
+    ADD CONSTRAINT income_sources_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: medications medications_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.medications
+    ADD CONSTRAINT medications_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: messages messages_connection_id_partner_connections_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.messages
+    ADD CONSTRAINT messages_connection_id_partner_connections_id_fk FOREIGN KEY (connection_id) REFERENCES public.partner_connections(id);
+
+
+--
+-- Name: messages messages_from_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.messages
+    ADD CONSTRAINT messages_from_user_id_users_id_fk FOREIGN KEY (from_user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: partner_alerts partner_alerts_from_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.partner_alerts
+    ADD CONSTRAINT partner_alerts_from_user_id_users_id_fk FOREIGN KEY (from_user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: partner_alerts partner_alerts_to_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.partner_alerts
+    ADD CONSTRAINT partner_alerts_to_user_id_users_id_fk FOREIGN KEY (to_user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: partner_connections partner_connections_from_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.partner_connections
+    ADD CONSTRAINT partner_connections_from_user_id_users_id_fk FOREIGN KEY (from_user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: partner_connections partner_connections_to_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.partner_connections
+    ADD CONSTRAINT partner_connections_to_user_id_users_id_fk FOREIGN KEY (to_user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: retros retros_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.retros
+    ADD CONSTRAINT retros_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: signals signals_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.signals
+    ADD CONSTRAINT signals_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: spending_settings spending_settings_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.spending_settings
+    ADD CONSTRAINT spending_settings_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: transactions transactions_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transactions
+    ADD CONSTRAINT transactions_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: upcoming_expenses upcoming_expenses_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.upcoming_expenses
+    ADD CONSTRAINT upcoming_expenses_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: wins wins_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.wins
+    ADD CONSTRAINT wins_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict ZkS9lnbGldTxEKQ3ywXn0cNm0XFOmSkebgwhcpLTvdp93EsuTdde5axEdO9wZkP
+
