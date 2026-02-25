@@ -4,7 +4,7 @@
 import React from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileHeader } from "@/components/mobile-header";
-import { Bell, CheckCircle2, AlertTriangle, MessageSquare, History, Loader2, X, Info } from "lucide-react";
+import { Bell, CheckCircle2, AlertTriangle, MessageSquare, Loader2, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
@@ -51,11 +51,9 @@ export default function NotificationsPage() {
       <MobileHeader />
 
       <main className="flex-1 px-4 pt-20 pb-32 space-y-6">
-        <div className="pt-4 flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">Notifications</h2>
-            <p className="text-gray-500 text-sm mt-1">Updates on your cycles and community.</p>
-          </div>
+        <div className="pt-4">
+          <h2 className="text-2xl font-bold text-white tracking-tight">Notifications</h2>
+          <p className="text-gray-500 text-sm mt-1">Updates on your cycles and community.</p>
         </div>
 
         <div className="space-y-3">

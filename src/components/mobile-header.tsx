@@ -2,14 +2,14 @@
 "use client";
 
 import React from "react";
-import { Menu, Heart, Pill, Bell, MessageCircle } from "lucide-react";
+import { Menu, Heart, Pill, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, LayoutGrid, User, Activity, Shield, MessageSquare, Star, Calendar, Folder, Settings, HeartPulse, Users } from "lucide-react";
+import { LayoutGrid, User, Activity, Shield, MessageSquare, Star, Calendar, Folder, HeartPulse, Users } from "lucide-react";
 import Link from "next/link";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, orderBy, limit } from "firebase/firestore";
+import { collection, query, where, limit } from "firebase/firestore";
 
 export function MobileHeader() {
   const { user } = useUser();
@@ -72,14 +72,14 @@ export function MobileHeader() {
             </div>
 
             <div className="p-6 border-t border-[#374151] bg-[#111827]">
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={user?.photoURL || "https://picsum.photos/seed/user/100"} />
                   <AvatarFallback>{user?.displayName?.charAt(0) || "U"}</AvatarFallback>
                 </Avatar>
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-white">{user?.displayName || "User"}</p>
-                  <p className="text-[10px] text-gray-500">{user?.email}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-white truncate">{user?.displayName || "User"}</p>
+                  <p className="text-[10px] text-gray-500 truncate">{user?.email}</p>
                 </div>
               </div>
             </div>

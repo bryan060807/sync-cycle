@@ -9,7 +9,6 @@ import {
   Plus, 
   MessageCircle, 
   Heart, 
-  Share2, 
   Search, 
   Loader2, 
   Filter
@@ -143,7 +142,7 @@ export default function ForumsPage() {
               <DialogFooter>
                 <Button 
                   onClick={handleCreatePost} 
-                  disabled={isSaving || !newTitle.trim()}
+                  disabled={isSaving || !newTitle.trim() || !newContent.trim()}
                   className="w-full btn-gradient h-12 rounded-xl"
                 >
                   {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : "Post Discussion"}
