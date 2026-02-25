@@ -37,7 +37,8 @@ import {
   serverTimestamp, 
   updateDoc, 
   arrayUnion, 
-  arrayRemove 
+  arrayRemove,
+  limit
 } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
@@ -467,8 +468,4 @@ function DayCard({ date }: { date: Date }) {
       </DialogContent>
     </Dialog>
   );
-}
-
-function limit(count: number) {
-  return (q: any) => q; // Simple mock for where limit isn't exported from firestore/lite in some environments
 }

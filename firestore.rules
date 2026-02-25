@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -24,13 +25,13 @@ service cloud.firestore {
 
     // User Profiles
     match /users/{userId} {
-      allow get, list: if isOwner(userId);
+      allow get, list: if isSignedIn(); // Allow partners to find profile info
       allow create: if isOwner(userId);
       allow update: if isOwner(userId);
       allow delete: if isOwner(userId);
     }
 
-    // Forum Posts: Signed-in users can read and create. Only owner can update/delete.
+    // Forum Posts
     match /forum-posts/{postId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
@@ -78,6 +79,13 @@ service cloud.firestore {
 
     // Lists & Collections
     match /lists/{listId} {
+      allow read, list: if isDataOwner();
+      allow create: if isRequestOwner();
+      allow update, delete: if isDataOwner();
+    }
+    
+    // Transactions (Dashboard Budget)
+    match /transactions/{transactionId} {
       allow read, list: if isDataOwner();
       allow create: if isRequestOwner();
       allow update, delete: if isDataOwner();

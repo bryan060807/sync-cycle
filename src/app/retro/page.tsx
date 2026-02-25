@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -114,7 +115,7 @@ export default function RetroPage() {
                   Review your weekly emotional logs, triggers, and growth patterns with AI analysis.
                 </p>
                 <Button 
-                  onClick={handleAiRetro}
+                  onClick={handleGenerateAiRetro}
                   disabled={isGenerating || !episodes?.length}
                   className="w-full btn-gradient h-12 gap-2"
                 >
