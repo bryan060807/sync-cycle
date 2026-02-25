@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileHeader } from "@/components/mobile-header";
-import { Sparkles, Brain, AlertCircle, Zap, ShieldAlert, Shield } from "lucide-react";
+import { Sparkles, Brain, AlertCircle, Zap, ShieldAlert } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -12,8 +12,17 @@ import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
   const [signal, setSignal] = useState("green");
+  const [cooldowns, setCooldowns] = useState<{ [key: string]: number }>({});
   const { toast } = useToast();
   const router = useRouter();
+
+  useEffect(() => {
+    // Load cooldowns from localStorage on mount
+    const saved = localStorage.getItem("crisis_cooldowns");
+    if (saved) {
+      setCooldowns(JSON.parse(saved));
+    }
+  }, []);
 
   const signals = [
     { id: "green", label: "Feeling Stable", color: "bg-[#14b8a6]" },
@@ -44,10 +53,38 @@ export default function Dashboard() {
     }
   };
 
+  const handleCrisisAlert = (id: string, label: string) => {
+    const now = Date.now();
+    const lastActive = cooldowns[id] || 0;
+    const thirtyMinutes = 30 * 60 * 1000;
+
+    if (now - lastActive < thirtyMinutes) {
+      const remaining = Math.ceil((thirtyMinutes - (now - lastActive)) / (60 * 1000));
+      toast({
+        title: "Button on Cooldown",
+        description: `You can send another ${label} alert in ${remaining} minutes.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Update cooldown
+    const newCooldowns = { ...cooldowns, [id]: now };
+    setCooldowns(newCooldowns);
+    localStorage.setItem("crisis_cooldowns", JSON.stringify(newCooldowns));
+
+    // Simulate sending unique alert to partner
+    toast({
+      title: "Alert Sent to Partner",
+      description: `Your partner has been notified: "${label}"`,
+      className: "bg-[#14b8a6] text-white border-none font-bold",
+    });
+  };
+
   const alertPills = [
-    { label: "Crisis", color: "bg-[#f97316]", icon: <ShieldAlert className="h-4 w-4" />, href: "/crisis" },
-    { label: "Mood", color: "bg-[#ef4444]", icon: <AlertCircle className="h-4 w-4" />, href: "/wellness" },
-    { label: "Sync", color: "bg-[#8b5cf6]", icon: <Zap className="h-4 w-4" />, href: "/retro" },
+    { id: "crisis", label: "CRISIS", color: "bg-[#f97316]", icon: <ShieldAlert className="h-4 w-4" /> },
+    { id: "safeword", label: "SAFE WORD", color: "bg-[#ef4444]", icon: <AlertCircle className="h-4 w-4" /> },
+    { id: "overwhelmed", label: "FEELING OVERWHELMED", color: "bg-[#3b82f6]", icon: <Zap className="h-4 w-4" /> },
   ];
 
   const activeSignal = signals.find((s) => s.id === signal);
@@ -91,20 +128,20 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Alert Pills */}
+        {/* Crisis Buttons */}
         <div className="grid grid-cols-3 gap-3">
           {alertPills.map((pill) => (
             <Button
-              key={pill.label}
-              onClick={() => router.push(pill.href)}
+              key={pill.id}
+              onClick={() => handleCrisisAlert(pill.id, pill.label)}
               className={cn(
-                "h-16 rounded-3xl border-none text-white font-bold flex flex-col gap-1 items-center justify-center transition-transform active:scale-95 shadow-xl",
+                "h-20 rounded-3xl border-none text-white font-bold flex flex-col gap-1 items-center justify-center transition-transform active:scale-95 shadow-xl px-2 text-center",
                 pill.color,
-                signal !== 'green' && pill.label === 'Crisis' && "ring-4 ring-white/20 animate-pulse"
+                signal !== 'green' && pill.id === 'crisis' && "ring-4 ring-white/20 animate-pulse"
               )}
             >
               {pill.icon}
-              <span className="text-[10px] uppercase tracking-widest">{pill.label}</span>
+              <span className="text-[9px] uppercase tracking-tighter leading-tight">{pill.label}</span>
             </Button>
           ))}
         </div>
