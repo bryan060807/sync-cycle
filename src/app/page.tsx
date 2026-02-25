@@ -82,7 +82,7 @@ export default function Dashboard() {
   };
 
   const alertPills = [
-    { id: "crisis", label: "CRISIS", color: "bg-[#f97316]", icon: <ShieldAlert className="h-4 w-4" /> },
+    { id: "crisis", label: "BADLY TRIGGERED", color: "bg-[#f97316]", icon: <ShieldAlert className="h-4 w-4" /> },
     { id: "safeword", label: "SAFE WORD", color: "bg-[#ef4444]", icon: <AlertCircle className="h-4 w-4" /> },
     { id: "overwhelmed", label: "FEELING OVERWHELMED", color: "bg-[#3b82f6]", icon: <Zap className="h-4 w-4" /> },
   ];
