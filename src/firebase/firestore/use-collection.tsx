@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Query, 
   onSnapshot, 
@@ -11,6 +11,13 @@ import {
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
 
+/**
+ * Stabilizes a Firestore query or reference to prevent unnecessary re-subscriptions.
+ */
+export function useMemoFirebase<T>(factory: () => T, deps: React.DependencyList): T {
+  return React.useMemo(factory, deps);
+}
+
 export function useCollection<T = DocumentData>(query: Query<T> | null) {
   const [data, setData] = useState<T[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -18,14 +25,16 @@ export function useCollection<T = DocumentData>(query: Query<T> | null) {
 
   useEffect(() => {
     if (!query) {
+      setData(null);
       setLoading(false);
       return;
     }
 
+    setLoading(true);
     const unsubscribe = onSnapshot(
       query,
       (snapshot: QuerySnapshot<T>) => {
-        setData(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })));
+        setData(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as T & { id: string })));
         setLoading(false);
       },
       async (err) => {

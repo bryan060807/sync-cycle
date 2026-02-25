@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { 
   Plus, 
   Sparkles, 
@@ -11,24 +11,23 @@ import {
   TrendingUp, 
   ArrowRight,
   MoreVertical,
-  BrainCircuit
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { MobileNav } from "@/components/mobile-nav";
-import { useUser, useFirestore, useCollection } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where, orderBy, limit } from "firebase/firestore";
 import Link from "next/link";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
   const { user } = useUser();
   const db = useFirestore();
 
-  // Fetch recent episodes
-  const episodesQuery = React.useMemo(() => {
+  const episodesQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return query(
       collection(db, "episodes"),
@@ -38,8 +37,7 @@ export default function Dashboard() {
     );
   }, [db, user]);
 
-  // Fetch goals
-  const goalsQuery = React.useMemo(() => {
+  const goalsQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return query(
       collection(db, "goals"),
@@ -61,7 +59,6 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      {/* Header */}
       <header className="px-6 pt-8 pb-4 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold font-headline text-foreground">SyncCycle</h1>
@@ -74,9 +71,7 @@ export default function Dashboard() {
         </Link>
       </header>
 
-      {/* Main Content */}
       <div className="px-6 space-y-6 flex-1 overflow-y-auto pb-24">
-        {/* Daily Summary Card */}
         <Card className="bg-primary border-none text-primary-foreground overflow-hidden relative">
           <div className="absolute right-0 top-0 opacity-10">
             <Sparkles className="h-24 w-24 translate-x-4 -translate-y-4" />
@@ -101,7 +96,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Quick Actions Grid */}
         <div className="grid grid-cols-2 gap-3">
           {quickLinks.map((link) => (
             <Link key={link.href} href={link.href}>
@@ -117,7 +111,6 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Recent Mood Cycle */}
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <h3 className="font-semibold text-sm flex items-center gap-2">
@@ -146,7 +139,6 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Active Goals */}
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <h3 className="font-semibold text-sm flex items-center gap-2">

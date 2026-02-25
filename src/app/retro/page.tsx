@@ -5,29 +5,26 @@ import React from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { 
   History, 
-  Calendar, 
   TrendingUp, 
   Heart, 
   Target, 
   DollarSign,
-  ChevronRight,
   Sparkles,
   Info
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useUser, useFirestore, useCollection } from "@/firebase";
-import { collection, query, where, orderBy, limit } from "firebase/firestore";
-import { format, subDays } from "date-fns";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, query, where, orderBy } from "firebase/firestore";
+import { subDays } from "date-fns";
 
 export default function RetroPage() {
   const { user } = useUser();
   const db = useFirestore();
 
-  // Queries for the last 7 days
-  const lastWeek = subDays(new Date(), 7);
+  const lastWeek = useMemoFirebase(() => subDays(new Date(), 7), []);
 
-  const episodesQuery = React.useMemo(() => {
+  const episodesQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return query(
       collection(db, "episodes"),
@@ -35,11 +32,11 @@ export default function RetroPage() {
       where("createdAt", ">=", lastWeek),
       orderBy("createdAt", "desc")
     );
-  }, [db, user]);
+  }, [db, user, lastWeek]);
 
   const { data: episodes } = useCollection(episodesQuery);
 
-  const goalsQuery = React.useMemo(() => {
+  const goalsQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return query(
       collection(db, "goals"),
@@ -65,7 +62,6 @@ export default function RetroPage() {
       </header>
 
       <div className="px-6 space-y-6 pb-24">
-        {/* Insight Card */}
         <Card className="bg-accent text-accent-foreground border-none relative overflow-hidden">
           <Sparkles className="absolute right-4 top-4 h-12 w-12 opacity-10" />
           <CardContent className="pt-6">
@@ -76,7 +72,6 @@ export default function RetroPage() {
           </CardContent>
         </Card>
 
-        {/* Key Metrics */}
         <div className="grid grid-cols-2 gap-4">
           <Card className="border-none shadow-sm">
             <CardContent className="p-4 flex flex-col items-center text-center">
@@ -94,7 +89,6 @@ export default function RetroPage() {
           </Card>
         </div>
 
-        {/* Detailed Breakdown */}
         <div className="space-y-4">
           <h3 className="font-semibold text-lg">Detailed Insights</h3>
           
