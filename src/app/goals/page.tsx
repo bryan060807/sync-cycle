@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -87,14 +88,6 @@ export default function Goals() {
               </CardContent>
             </Card>
           ))}
-        </div>
-
-        <div className="pt-6">
-          <div className="bg-[#111827] border border-dashed border-[#374151] p-8 rounded-3xl text-center">
-            <Target className="h-12 w-12 text-gray-700 mx-auto mb-4" />
-            <p className="text-sm font-bold text-gray-400">Todoist Integrated</p>
-            <p className="text-[10px] text-gray-600 mt-1 uppercase tracking-widest">Active Sync</p>
-          </div>
         </div>
       </main>
 
