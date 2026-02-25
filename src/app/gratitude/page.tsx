@@ -91,7 +91,7 @@ export default function Gratitude() {
         </div>
 
         {/* Input Box */}
-        <div className="bg-[#1f2937] p-6 rounded-[2rem] border border-[#374151] space-y-4 shadow-xl text-body">
+        <div className="bg-[#1f2937] p-6 rounded-[2rem] border border-[#374151] space-y-4 shadow-xl">
           <div className="space-y-1">
             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Daily Prompt</p>
             <p className="text-sm text-gray-200 italic font-medium">"One thing I'm proud of myself or my partner for today..."</p>
@@ -136,7 +136,7 @@ export default function Gratitude() {
               </div>
             ) : archives?.map((win: any) => (
               <Card key={win.id} className="bg-[#1f2937] border-[#374151] rounded-3xl p-4 shadow-md transition-transform active:scale-[0.98]">
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-4 text-left">
                   <div className="p-2 bg-yellow-500/10 rounded-xl">
                     <Heart className="h-4 w-4 text-yellow-500" />
                   </div>

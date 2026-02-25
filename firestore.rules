@@ -14,63 +14,77 @@ service cloud.firestore {
 
     // --- Collection Rules ---
 
-    // User Profiles
+    // User Profiles: Users can manage their own profile
     match /users/{userId} {
       allow read: if isSignedIn();
       allow write: if isOwner(userId);
     }
 
-    // Goals: Explicitly handle list and get to ensure query engine satisfaction
+    // Personal Data Collections (Episodes, Gratitude, Health, Meds, Lists, Notifications)
+    // These follow a strict ownership pattern.
+    match /episodes/{id} {
+      allow read, write: if isSignedIn() && (
+        (resource == null && request.resource.data.userId == request.auth.uid) ||
+        (resource != null && resource.data.userId == request.auth.uid)
+      );
+    }
+
+    match /gratitude/{id} {
+      allow read, write: if isSignedIn() && (
+        (resource == null && request.resource.data.userId == request.auth.uid) ||
+        (resource != null && resource.data.userId == request.auth.uid)
+      );
+    }
+
+    match /health-metrics/{id} {
+      allow read, write: if isSignedIn() && (
+        (resource == null && request.resource.data.userId == request.auth.uid) ||
+        (resource != null && resource.data.userId == request.auth.uid)
+      );
+    }
+
+    match /medications/{id} {
+      allow read, write: if isSignedIn() && (
+        (resource == null && request.resource.data.userId == request.auth.uid) ||
+        (resource != null && resource.data.userId == request.auth.uid)
+      );
+    }
+
+    match /lists/{id} {
+      allow read, write: if isSignedIn() && (
+        (resource == null && request.resource.data.userId == request.auth.uid) ||
+        (resource != null && resource.data.userId == request.auth.uid)
+      );
+    }
+
+    match /notifications/{id} {
+      allow read, write: if isSignedIn() && (
+        (resource == null && request.resource.data.userId == request.auth.uid) ||
+        (resource != null && resource.data.userId == request.auth.uid)
+      );
+    }
+
+    // Goals: Support for personal and shared goals
     match /goals/{goalId} {
-      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.shared == true);
-      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.shared == true);
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        resource.data.shared == true
+      );
+      allow write: if isSignedIn() && (
+        (resource == null && request.resource.data.userId == request.auth.uid) ||
+        (resource != null && resource.data.userId == request.auth.uid)
+      );
     }
 
-    // Emotional Episodes
-    match /episodes/{episodeId} {
-      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.isAnonymized == true);
-      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.isAnonymized == true);
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
-    }
-
-    // Gratitude / Wins
-    match /gratitude/{winId} {
-      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
-    }
-
-    // Forum Posts
+    // Forum Posts: Community readable, owner writable
     match /forum-posts/{postId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isSignedIn() && (
-        (resource.data.userId == request.auth.uid) || 
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']))
-      );
-      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      // Allow specific updates like likes if we had a more complex setup, but keeping it simple for now
     }
 
-    // Health Metrics & Medications
-    match /health-metrics/{metricId} {
-      allow read, write: if isSignedIn() && (
-        (resource == null && request.resource.data.userId == request.auth.uid) ||
-        (resource != null && resource.data.userId == request.auth.uid)
-      );
-    }
-
-    match /medications/{medId} {
-      allow read, write: if isSignedIn() && (
-        (resource == null && request.resource.data.userId == request.auth.uid) ||
-        (resource != null && resource.data.userId == request.auth.uid)
-      );
-    }
-
-    // Partner Invites: Null-safe email checks for guest users
+    // Partner Invites
     match /invites/{inviteId} {
       allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
       allow read, update: if isSignedIn() && (
@@ -82,27 +96,13 @@ service cloud.firestore {
 
     // Couples & Shared Data
     match /couples/{coupleId} {
-      allow read, update: if isSignedIn() && request.auth.uid in resource.data.uids;
-      allow create: if isSignedIn() && request.auth.uid in request.resource.data.uids;
+      allow read: if isSignedIn() && request.auth.uid in resource.data.uids;
+      allow create: if isSignedIn(); 
+      allow update: if isSignedIn() && request.auth.uid in resource.data.uids;
       
       match /messages/{messageId} {
         allow read, create: if isSignedIn();
       }
-    }
-
-    // Lists, Notifications
-    match /lists/{listId} {
-      allow read, write: if isSignedIn() && (
-        (resource == null && request.resource.data.userId == request.auth.uid) ||
-        (resource != null && resource.data.userId == request.auth.uid)
-      );
-    }
-
-    match /notifications/{notifId} {
-      allow read, write: if isSignedIn() && (
-        (resource == null && request.resource.data.userId == request.auth.uid) ||
-        (resource != null && resource.data.userId == request.auth.uid)
-      );
     }
 
     // Default deny

@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
-import { collection, query, where, orderBy, limit, doc, updateDoc, setDoc } from "firebase/firestore";
+import { collection, query, where, orderBy, limit, doc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export default function Dashboard() {
   const { user, loading: isUserLoading } = useUser();
@@ -31,6 +31,20 @@ export default function Dashboard() {
     return doc(db, "users", user.uid);
   }, [db, user]);
   const { data: userProfile } = useDoc(userProfileRef);
+
+  // Initialize profile if it doesn't exist
+  useEffect(() => {
+    if (db && user && !isUserLoading && !userProfile) {
+      const userRef = doc(db, "users", user.uid);
+      setDoc(userRef, {
+        id: user.uid,
+        email: user.email || "guest",
+        username: user.displayName || (user.isAnonymous ? "Guest" : user.email?.split('@')[0]) || "Anonymous",
+        currentSignal: "green",
+        createdAt: new Date().toISOString()
+      }, { merge: true });
+    }
+  }, [db, user, isUserLoading, userProfile]);
 
   const signal = userProfile?.currentSignal || "green";
 
@@ -88,29 +102,28 @@ export default function Dashboard() {
     const oldSignal = signal;
     
     const userRef = doc(db, "users", user.uid);
-    updateDoc(userRef, { currentSignal: newSignal })
-      .catch(() => {
-        // Fallback for new profiles
-        setDoc(userRef, { currentSignal: newSignal, id: user.uid, email: user.email || "guest", createdAt: new Date().toISOString() }, { merge: true });
-      });
-
-    if (newSignal !== "green" && oldSignal === "green") {
-      toast({
-        title: "Crisis Plan Activated",
-        description: `Your signal is now ${newSignal === 'orange' ? 'Sensitive' : 'Crisis'}. Your safety techniques are ready.`,
-        action: (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="border-white/20 bg-white/10 text-white"
-            onClick={() => router.push("/crisis")}
-          >
-            View Plan
-          </Button>
-        ),
-        className: "bg-[#ef4444] text-white border-none",
-      });
-    }
+    updateDoc(userRef, { 
+      currentSignal: newSignal,
+      updatedAt: serverTimestamp() 
+    }).then(() => {
+      if (newSignal !== "green" && oldSignal === "green") {
+        toast({
+          title: "Crisis Plan Activated",
+          description: `Your signal is now ${newSignal === 'orange' ? 'Sensitive' : 'Crisis'}.`,
+          action: (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="border-white/20 bg-white/10 text-white"
+              onClick={() => router.push("/crisis")}
+            >
+              View Plan
+            </Button>
+          ),
+          className: "bg-[#ef4444] text-white border-none",
+        });
+      }
+    });
   };
 
   const handleCrisisAlert = (id: string, label: string) => {

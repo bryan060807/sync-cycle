@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileHeader } from "@/components/mobile-header";
 import { Plus, Target, Users, MoreHorizontal, CheckCircle, Trash2, Loader2, AlertCircle } from "lucide-react";
@@ -30,11 +30,13 @@ import { cn } from "@/lib/utils";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 export default function Goals() {
   const { user, loading: isUserLoading } = useUser();
   const auth = useAuth();
   const db = useFirestore();
+  const router = useRouter();
   const { toast } = useToast();
   
   const [tab, setTab] = useState("personal");
@@ -44,6 +46,13 @@ export default function Goals() {
   const [newTitle, setNewTitle] = useState("");
   const [newCategory, setNewCategory] = useState("General");
   const [isShared, setIsShared] = useState(false);
+
+  // Guard against unauthenticated access
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, isUserLoading, router]);
 
   const goalsQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
@@ -112,15 +121,17 @@ export default function Goals() {
     if (!db) return;
     const newProgress = Math.max(0, Math.min(100, currentProgress + increment));
     const goalRef = doc(db, "goals", id);
-    updateDoc(goalRef, { progress: newProgress })
-      .catch(async () => {
-        const permissionError = new FirestorePermissionError({
-          path: goalRef.path,
-          operation: "update",
-          requestResourceData: { progress: newProgress },
-        });
-        errorEmitter.emit("permission-error", permissionError);
+    updateDoc(goalRef, { 
+      progress: newProgress,
+      updatedAt: serverTimestamp() 
+    }).catch(async () => {
+      const permissionError = new FirestorePermissionError({
+        path: goalRef.path,
+        operation: "update",
+        requestResourceData: { progress: newProgress },
       });
+      errorEmitter.emit("permission-error", permissionError);
+    });
   };
 
   const handleSignIn = () => {
@@ -135,24 +146,7 @@ export default function Goals() {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="flex flex-col min-h-screen bg-[#0f1117]">
-        <MobileHeader />
-        <main className="flex-1 px-4 pt-20 flex flex-col items-center justify-center text-center space-y-4">
-          <AlertCircle className="h-12 w-12 text-gray-500" />
-          <h2 className="text-xl font-bold text-white uppercase tracking-tight">Login Required</h2>
-          <p className="text-gray-500 text-sm max-w-xs">
-            You need to be signed in to manage your personal and shared goals.
-          </p>
-          <Button onClick={handleSignIn} className="btn-gradient w-full max-w-xs h-12 rounded-xl">
-            Enter Anonymously
-          </Button>
-        </main>
-        <MobileNav activeTab="home" />
-      </div>
-    );
-  }
+  if (!user) return null;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0f1117]">
