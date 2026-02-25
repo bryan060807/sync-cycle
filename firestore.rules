@@ -36,14 +36,12 @@ service cloud.firestore {
 
     // Emotional Episodes
     match /episodes/{episodeId} {
-      // Individual get
       allow get: if isSignedIn() && (
         resource.data.userId == request.auth.uid || 
         resource.data.isAnonymized == true
       );
-      // List/Query: Owner only
+      // Separate list rules to help Firestore Query engine validation
       allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
-      // List/Query: Anonymized only
       allow list: if isSignedIn() && resource.data.isAnonymized == true;
       
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
@@ -52,35 +50,35 @@ service cloud.firestore {
 
     // Health Metrics
     match /health-metrics/{metricId} {
-      allow read, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Medications
     match /medications/{medId} {
-      allow read, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Gratitude / Wins
     match /gratitude/{winId} {
-      allow read, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Goals
     match /goals/{goalId} {
-      // Get: Owner or Shared
       allow get: if isSignedIn() && (
         resource.data.userId == request.auth.uid || 
         resource.data.shared == true
       );
-      // List: Owner only
       allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
-      // List: Shared only
       allow list: if isSignedIn() && resource.data.shared == true;
 
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
@@ -89,14 +87,16 @@ service cloud.firestore {
 
     // Notifications
     match /notifications/{notifId} {
-      allow read, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Lists & Collections
     match /lists/{listId} {
-      allow read, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
@@ -104,10 +104,13 @@ service cloud.firestore {
     // Partner Invites
     match /invites/{inviteId} {
       allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
-      allow read, list: if isSignedIn() && (
-        resource.data.senderId == request.auth.uid || 
-        (request.auth.token.email != null && resource.data.receiverEmail == request.auth.token.email)
-      );
+      
+      allow get: if isSignedIn() && resource.data.senderId == request.auth.uid;
+      allow get: if isSignedIn() && request.auth.token.email != null && resource.data.receiverEmail == request.auth.token.email;
+      
+      allow list: if isSignedIn() && resource.data.senderId == request.auth.uid;
+      allow list: if isSignedIn() && request.auth.token.email != null && resource.data.receiverEmail == request.auth.token.email;
+      
       allow update: if isSignedIn() && (
         resource.data.senderId == request.auth.uid || 
         (request.auth.token.email != null && resource.data.receiverEmail == request.auth.token.email)
