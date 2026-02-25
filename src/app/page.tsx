@@ -3,13 +3,13 @@
 import React, { useState, useEffect } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileHeader } from "@/components/mobile-header";
-import { Sparkles, Brain, AlertCircle, Zap, ShieldAlert, History } from "lucide-react";
+import { Sparkles, AlertCircle, Zap, ShieldAlert, History, Wallet, TrendingDown, TrendingUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { useUser, useFirestore, useCollection } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where, orderBy, limit } from "firebase/firestore";
 
 export default function Dashboard() {
@@ -22,7 +22,7 @@ export default function Dashboard() {
   const [cooldowns, setCooldowns] = useState<{ [key: string]: number }>({});
 
   // Fetch episodes for stats
-  const episodesQuery = React.useMemo(() => {
+  const episodesQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return query(
       collection(db, "episodes"),
@@ -33,6 +33,18 @@ export default function Dashboard() {
   }, [db, user]);
 
   const { data: episodes, loading: loadingEpisodes } = useCollection(episodesQuery);
+
+  // Fetch transactions for budget health
+  const transactionsQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return query(
+      collection(db, "transactions"),
+      where("userId", "==", user.uid),
+      limit(100)
+    );
+  }, [db, user]);
+
+  const { data: transactions, loading: loadingTransactions } = useCollection(transactionsQuery);
 
   useEffect(() => {
     const saved = localStorage.getItem("crisis_cooldowns");
@@ -108,6 +120,19 @@ export default function Dashboard() {
   const avgIntensity = episodes?.length 
     ? (episodes.reduce((acc, ep) => acc + (ep.intensity || 0), 0) / episodes.length).toFixed(1)
     : "0.0";
+
+  // Calculate Budget Health
+  const totalExpense = transactions
+    ?.filter((t: any) => t.type === 'expense')
+    .reduce((sum: number, t: any) => sum + (t.amount || 0), 0) || 0;
+
+  const totalIncome = transactions
+    ?.filter((t: any) => t.type === 'income')
+    .reduce((sum: number, t: any) => sum + (t.amount || 0), 0) || 0;
+
+  const isOverBudget = totalExpense > totalIncome;
+  const budgetStatus = isOverBudget ? "Over Budget" : "Under Budget";
+  const budgetColor = isOverBudget ? "text-[#ef4444]" : "text-[#14b8a6]";
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0f1117]">
@@ -186,6 +211,34 @@ export default function Dashboard() {
                 <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Recent Entries</span>
               </div>
               <span className="text-lg font-black text-[#a855f7]">{episodes?.length || 0}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Budget Health Card */}
+        <Card className="bg-[#1f2937] border-[#374151] rounded-[2rem] p-6 shadow-xl">
+          <CardContent className="p-0 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className={cn(
+                "p-3 rounded-2xl bg-[#111827] border",
+                isOverBudget ? "border-[#ef4444]/30" : "border-[#14b8a6]/30"
+              )}>
+                {isOverBudget ? (
+                  <TrendingDown className="h-6 w-6 text-[#ef4444]" />
+                ) : (
+                  <TrendingUp className="h-6 w-6 text-[#14b8a6]" />
+                )}
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Budget Health</p>
+                <h3 className={cn("text-xl font-black uppercase tracking-tight", budgetColor)}>
+                  {loadingTransactions ? "Analyzing..." : budgetStatus}
+                </h3>
+              </div>
+            </div>
+            <div className="text-right">
+              <Wallet className="h-5 w-5 text-gray-700 ml-auto mb-1" />
+              <p className="text-[10px] text-gray-600 font-bold uppercase tracking-tighter">Live Sync</p>
             </div>
           </CardContent>
         </Card>
