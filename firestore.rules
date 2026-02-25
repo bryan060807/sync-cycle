@@ -13,7 +13,7 @@ service cloud.firestore {
     }
 
     function isDocOwner(data) {
-      return isSignedIn() && data.userId == request.auth.uid;
+      return isSignedIn() && data != null && data.userId == request.auth.uid;
     }
 
     // --- Collection Rules ---
@@ -37,7 +37,9 @@ service cloud.firestore {
 
     // Emotional Episodes
     match /episodes/{episodeId} {
-      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.isAnonymized == true);
+      // Split read into get and list for clearer query validation
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.isAnonymized == true);
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.isAnonymized == true);
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isDocOwner(resource.data);
     }
@@ -65,10 +67,9 @@ service cloud.firestore {
 
     // Goals
     match /goals/{goalId} {
-      allow read: if isSignedIn() && (
-        resource.data.userId == request.auth.uid || 
-        resource.data.shared == true
-      );
+      // Explicitly allow listing based on ownership or shared status
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.shared == true);
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.shared == true);
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isDocOwner(resource.data);
     }
@@ -90,11 +91,7 @@ service cloud.firestore {
     // Partner Invites
     match /invites/{inviteId} {
       allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
-      allow read: if isSignedIn() && (
-        resource.data.senderId == request.auth.uid || 
-        (request.auth.token.email != null && resource.data.receiverEmail == request.auth.token.email)
-      );
-      allow update: if isSignedIn() && (
+      allow read, update: if isSignedIn() && (
         resource.data.senderId == request.auth.uid || 
         (request.auth.token.email != null && resource.data.receiverEmail == request.auth.token.email)
       );
@@ -107,10 +104,13 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.auth.uid in request.resource.data.uids;
       
       match /messages/{messageId} {
-        allow read, create: if isSignedIn() && exists(/databases/$(database)/documents/couples/$(coupleId)) && request.auth.uid in get(/databases/$(database)/documents/couples/$(coupleId)).data.uids;
+        allow read, create: if isSignedIn() && 
+          exists(/databases/$(database)/documents/couples/$(coupleId)) && 
+          request.auth.uid in get(/databases/$(database)/documents/couples/$(coupleId)).data.uids;
       }
     }
 
+    // Default deny
     match /{document=**} {
       allow read, write: if false;
     }
