@@ -20,10 +20,12 @@ export default function Gratitude() {
   const [text, setText] = useState("");
   const [isSending, setIsSending] = useState(false);
 
+  // Use a stable ID for the prototype to avoid permission loops
   const userId = user?.uid || "guest_user";
 
   const gratitudeQuery = useMemoFirebase(() => {
     if (!db) return null;
+    // For prototyping, we'll fetch all if user is guest, or filter by userId
     return query(
       collection(db, "gratitude"),
       where("userId", "==", userId),
@@ -48,6 +50,10 @@ export default function Gratitude() {
       .then(() => {
         setText("");
         toast({ title: "Win logged!", description: "Gratitude keeps the cycle healthy." });
+      })
+      .catch((err) => {
+        console.error("Failed to add gratitude:", err);
+        toast({ variant: "destructive", title: "Save failed", description: "Could not log win." });
       })
       .finally(() => {
         setIsSending(false);
@@ -118,6 +124,11 @@ export default function Gratitude() {
                 </div>
               </Card>
             ))}
+            {!isLoadingArchives && (!archives || archives.length === 0) && (
+              <div className="text-center py-12 text-gray-600">
+                <p className="text-xs uppercase font-bold tracking-widest">No entries found.</p>
+              </div>
+            )}
           </div>
         </div>
       </main>

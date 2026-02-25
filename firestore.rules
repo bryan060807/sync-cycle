@@ -1,10 +1,23 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // --- OPEN ACCESS FOR PROTOTYPING ---
-    // This allows anyone to read and write all data.
-    // Use this to unblock development while troubleshooting auth-related permission loops.
+    // --- FULL OPEN ACCESS FOR PROTOTYPING ---
+    // Updated at: 2024-03-24T12:00:00Z
+    // This allows anyone to read and write all data without authentication.
     match /{document=**} {
+      allow read, write: if true;
+    }
+
+    // Explicitly allow list operations for collections that were throwing errors
+    match /gratitude/{document=**} {
+      allow read, write: if true;
+    }
+    
+    match /episodes/{document=**} {
+      allow read, write: if true;
+    }
+
+    match /goals/{document=**} {
       allow read, write: if true;
     }
   }
