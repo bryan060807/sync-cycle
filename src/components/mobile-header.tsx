@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from "react";
@@ -13,7 +12,7 @@ export function MobileHeader() {
   const menuItems = [
     { icon: <LayoutGrid />, label: "Dashboard", href: "/" },
     { icon: <User />, label: "Profile", href: "/settings" },
-    { icon: <Activity />, label: "Wellness", href: "/wellness" },
+    { icon: <Activity />, label: "Emotional Check-in", href: "/wellness" },
     { icon: <HeartPulse />, label: "Health", href: "/health" },
     { icon: <Pill />, label: "Medications", href: "/meds" },
     { icon: <Shield />, label: "Crisis Plan", href: "/crisis" },

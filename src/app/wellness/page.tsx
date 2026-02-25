@@ -57,7 +57,7 @@ export default function WellnessTracker() {
       notes: notes.trim(),
       userId: user.uid,
       createdAt: serverTimestamp(),
-      isAnonymized, // Extension property if needed, though not in schema, safe to include or omit
+      isAnonymized,
     };
 
     addDoc(collection(db, "episodes"), data)
@@ -86,7 +86,7 @@ export default function WellnessTracker() {
 
       <main className="flex-1 px-4 pt-20 pb-24 space-y-6">
         <div className="pt-4 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-white tracking-tight">Wellness Tracker</h2>
+          <h2 className="text-2xl font-bold text-white tracking-tight">Emotional Check-in</h2>
           <Button variant="ghost" className="text-[#a855f7] font-bold text-xs uppercase tracking-widest">History</Button>
         </div>
 
@@ -182,7 +182,7 @@ export default function WellnessTracker() {
               disabled={isSaving}
               className="w-full btn-gradient h-14 shadow-lg shadow-purple-600/20"
             >
-              {isSaving ? <Loader2 className="h-6 w-6 animate-spin" /> : "Log Session"}
+              {isSaving ? <Loader2 className="h-6 w-6 animate-spin" /> : "Log Check-in"}
             </Button>
           </div>
         </div>
