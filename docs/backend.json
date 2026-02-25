@@ -67,6 +67,51 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "title", "progress", "createdAt"]
+    },
+    "ForumPost": {
+      "title": "ForumPost",
+      "type": "object",
+      "description": "A post in the community forum.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userDisplayName": { "type": "string" },
+        "userPhotoUrl": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "category": { "type": "string" },
+        "likes": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "content", "createdAt"]
+    },
+    "GratitudeWin": {
+      "title": "GratitudeWin",
+      "type": "object",
+      "description": "A user's daily win or gratitude entry.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "text", "createdAt"]
+    },
+    "EmotionalEpisode": {
+      "title": "EmotionalEpisode",
+      "type": "object",
+      "description": "An emotional state tracking entry.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "intensity": { "type": "number" },
+        "trigger": { "type": "string" },
+        "notes": { "type": "string" },
+        "isAnonymized": { "type": "boolean" },
+        "aiInsights": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "intensity", "createdAt"]
     }
   },
   "auth": {
@@ -87,7 +132,7 @@
         "definition": {
           "entityName": "PartnerInvite",
           "schema": { "$ref": "#/backend/entities/PartnerInvite" },
-          "description": "Global invites collection for finding invites by receiverEmail."
+          "description": "Global invites collection."
         }
       },
       {
@@ -112,6 +157,30 @@
           "entityName": "Goal",
           "schema": { "$ref": "#/backend/entities/Goal" },
           "description": "User goals and habits."
+        }
+      },
+      {
+        "path": "/forum-posts/{postId}",
+        "definition": {
+          "entityName": "ForumPost",
+          "schema": { "$ref": "#/backend/entities/ForumPost" },
+          "description": "Community discussion posts."
+        }
+      },
+      {
+        "path": "/gratitude/{winId}",
+        "definition": {
+          "entityName": "GratitudeWin",
+          "schema": { "$ref": "#/backend/entities/GratitudeWin" },
+          "description": "Daily wins and gratitude entries."
+        }
+      },
+      {
+        "path": "/episodes/{episodeId}",
+        "definition": {
+          "entityName": "EmotionalEpisode",
+          "schema": { "$ref": "#/backend/entities/EmotionalEpisode" },
+          "description": "Emotional tracking logs."
         }
       }
     ]

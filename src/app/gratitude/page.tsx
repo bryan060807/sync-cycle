@@ -7,16 +7,21 @@ import { MobileHeader } from "@/components/mobile-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Heart, Send, History, Loader2 } from "lucide-react";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { Heart, Send, History, Loader2, AlertCircle } from "lucide-react";
+import { useUser, useFirestore, useCollection, useMemoFirebase, useAuth } from "@/firebase";
 import { collection, addDoc, serverTimestamp, query, where, orderBy, limit } from "firebase/firestore";
+import { signInAnonymously } from "firebase/auth";
 import { format } from "date-fns";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Gratitude() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
+  const auth = useAuth();
   const db = useFirestore();
+  const { toast } = useToast();
+  
   const [text, setText] = useState("");
   const [isSending, setIsSending] = useState(false);
 
@@ -30,7 +35,7 @@ export default function Gratitude() {
     );
   }, [db, user]);
 
-  const { data: archives, loading } = useCollection(gratitudeQuery);
+  const { data: archives, isLoading: loading } = useCollection(gratitudeQuery);
 
   const handleSendWin = () => {
     if (!text.trim() || !db || !user) return;
@@ -45,6 +50,7 @@ export default function Gratitude() {
     addDoc(collection(db, "gratitude"), data)
       .then(() => {
         setText("");
+        toast({ title: "Win logged!", description: "Gratitude keeps the cycle healthy." });
       })
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
@@ -59,6 +65,37 @@ export default function Gratitude() {
       });
   };
 
+  const handleSignIn = () => {
+    signInAnonymously(auth);
+  };
+
+  if (isUserLoading) {
+    return (
+      <div className="flex flex-col min-h-screen bg-[#0f1117] items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex flex-col min-h-screen bg-[#0f1117]">
+        <MobileHeader />
+        <main className="flex-1 px-4 pt-20 flex flex-col items-center justify-center text-center space-y-4">
+          <AlertCircle className="h-12 w-12 text-gray-500" />
+          <h2 className="text-xl font-bold text-white uppercase tracking-tight">Login Required</h2>
+          <p className="text-gray-500 text-sm max-w-xs">
+            You need to be signed in to log your daily wins and view your gratitude archive.
+          </p>
+          <Button onClick={handleSignIn} className="btn-gradient w-full max-w-xs h-12 rounded-xl">
+            Enter Anonymously
+          </Button>
+        </main>
+        <MobileNav activeTab="home" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-[#0f1117]">
       <MobileHeader />
@@ -70,10 +107,10 @@ export default function Gratitude() {
         </div>
 
         {/* Input Box */}
-        <div className="bg-[#1f2937] p-6 rounded-3xl border border-[#374151] space-y-4 shadow-xl">
+        <div className="bg-[#1f2937] p-6 rounded-3xl border border-[#374151] space-y-4 shadow-xl text-body">
           <div className="space-y-2">
             <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Daily Prompt</p>
-            <p className="text-sm text-gray-300 italic font-medium">"One thing I'm proud of my partner for today..."</p>
+            <p className="text-sm text-gray-300 italic font-medium">"One thing I'm proud of myself or my partner for today..."</p>
           </div>
           <div className="relative">
             <Input 

@@ -4,7 +4,7 @@
 import React, { useState } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileHeader } from "@/components/mobile-header";
-import { Plus, Target, Users, MoreHorizontal, CheckCircle, Trash2, Loader2, Sparkles } from "lucide-react";
+import { Plus, Target, Users, MoreHorizontal, CheckCircle, Trash2, Loader2, Edit2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -24,15 +24,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase, useAuth } from "@/firebase";
 import { collection, addDoc, deleteDoc, doc, query, where, orderBy, serverTimestamp, updateDoc } from "firebase/firestore";
+import { signInAnonymously } from "firebase/auth";
 import { cn } from "@/lib/utils";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Goals() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
+  const auth = useAuth();
   const db = useFirestore();
+  const { toast } = useToast();
+  
   const [tab, setTab] = useState("personal");
   const [isAdding, setIsAdding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -51,7 +56,7 @@ export default function Goals() {
     );
   }, [db, user]);
 
-  const { data: goals, loading } = useCollection(goalsQuery);
+  const { data: goals, isLoading: loading } = useCollection(goalsQuery);
 
   const filteredGoals = goals?.filter(g => 
     tab === "shared" ? g.shared === true : g.shared !== true
@@ -76,6 +81,7 @@ export default function Goals() {
         setNewCategory("General");
         setIsShared(false);
         setIsAdding(false);
+        toast({ title: "Goal set!", description: "Keep chasing your progress." });
       })
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
@@ -90,7 +96,9 @@ export default function Goals() {
 
   const handleDeleteGoal = async (id: string) => {
     if (!db) return;
-    deleteDoc(doc(db, "goals", id)).catch(async () => {
+    deleteDoc(doc(db, "goals", id)).then(() => {
+      toast({ title: "Goal removed" });
+    }).catch(async () => {
       const permissionError = new FirestorePermissionError({
         path: `goals/${id}`,
         operation: "delete",
@@ -111,6 +119,37 @@ export default function Goals() {
       errorEmitter.emit("permission-error", permissionError);
     });
   };
+
+  const handleSignIn = () => {
+    signInAnonymously(auth);
+  };
+
+  if (isUserLoading) {
+    return (
+      <div className="flex flex-col min-h-screen bg-[#0f1117] items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex flex-col min-h-screen bg-[#0f1117]">
+        <MobileHeader />
+        <main className="flex-1 px-4 pt-20 flex flex-col items-center justify-center text-center space-y-4">
+          <AlertCircle className="h-12 w-12 text-gray-500" />
+          <h2 className="text-xl font-bold text-white uppercase tracking-tight">Login Required</h2>
+          <p className="text-gray-500 text-sm max-w-xs">
+            You need to be signed in to manage your personal and shared goals.
+          </p>
+          <Button onClick={handleSignIn} className="btn-gradient w-full max-w-xs h-12 rounded-xl">
+            Enter Anonymously
+          </Button>
+        </main>
+        <MobileNav activeTab="home" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0f1117]">
@@ -220,7 +259,7 @@ export default function Goals() {
                     <DropdownMenuContent className="bg-[#1f2937] border-[#374151] text-white">
                       <DropdownMenuItem 
                         className="text-red-500 focus:text-red-500 focus:bg-red-500/10 gap-2 cursor-pointer"
-                        onClick={() => handleDeleteGoal(goal.id)}
+                        onSelect={() => handleDeleteGoal(goal.id)}
                       >
                         <Trash2 className="h-4 w-4" /> Delete Goal
                       </DropdownMenuItem>
