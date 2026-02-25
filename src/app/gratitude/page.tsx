@@ -1,0 +1,77 @@
+"use client";
+
+import React from "react";
+import { MobileNav } from "@/components/mobile-nav";
+import { MobileHeader } from "@/components/mobile-header";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Heart, Send, History } from "lucide-react";
+
+export default function Gratitude() {
+  const archives = [
+    { text: "Partner made me coffee without asking.", date: "Today" },
+    { text: "Successfully navigated a difficult trigger.", date: "Yesterday" },
+  ];
+
+  return (
+    <div className="flex flex-col min-h-screen bg-[#0f1117]">
+      <MobileHeader />
+
+      <main className="flex-1 px-4 pt-20 pb-24 space-y-6">
+        <div className="pt-4">
+          <h2 className="text-2xl font-bold text-white">Wins & Gratitude</h2>
+          <p className="text-gray-500 text-sm mt-1">What went well today?</p>
+        </div>
+
+        {/* Input Box */}
+        <div className="bg-[#1f2937] p-6 rounded-3xl border border-[#374151] space-y-4 shadow-xl">
+          <div className="space-y-2">
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Daily Prompt</p>
+            <p className="text-sm text-gray-300 italic font-medium">"One thing I'm proud of my partner for today..."</p>
+          </div>
+          <div className="relative">
+            <Input 
+              placeholder="Start typing..." 
+              className="bg-[#111827] border-[#374151] rounded-2xl h-14 pl-4 pr-14"
+            />
+            <Button size="icon" className="absolute right-2 top-2 h-10 w-10 bg-yellow-500 hover:bg-yellow-600 rounded-xl">
+              <Send className="h-4 w-4 text-white" />
+            </Button>
+          </div>
+        </div>
+
+        {/* History */}
+        <div className="pt-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <History className="h-4 w-4 text-gray-500" />
+              <h3 className="font-bold text-gray-300">Archived Wins</h3>
+            </div>
+            <span className="text-[10px] bg-[#1f2937] px-3 py-1 rounded-full border border-[#374151] text-gray-500 font-bold uppercase tracking-widest">
+              12 Total
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {archives.map((win, i) => (
+              <Card key={i} className="bg-[#1f2937] border-[#374151] rounded-2xl p-4">
+                <div className="flex items-start gap-4">
+                  <div className="p-2 bg-yellow-500/10 rounded-xl">
+                    <Heart className="h-4 w-4 text-yellow-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-white font-medium">{win.text}</p>
+                    <p className="text-[10px] text-gray-600 mt-1 uppercase font-bold">{win.date}</p>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </main>
+
+      <MobileNav activeTab="home" />
+    </div>
+  );
+}

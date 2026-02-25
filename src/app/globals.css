@@ -4,29 +4,29 @@
 
 @layer base {
   :root {
-    --background: 222 47% 11%;
+    --background: 222 47% 4%;
     --foreground: 210 40% 98%;
-    --card: 222 47% 15%;
+    --card: 222 47% 10%;
     --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
+    --popover: 222 47% 4%;
     --popover-foreground: 210 40% 98%;
-    --primary: 262 83% 58%;
+    --primary: 271 91% 65%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 222 47% 20%;
+    --secondary: 222 47% 15%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 222 47% 20%;
+    --muted: 222 47% 15%;
     --muted-foreground: 215 20% 65%;
-    --accent: 262 83% 58%;
+    --accent: 271 91% 65%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-    --border: 222 47% 20%;
-    --input: 222 47% 20%;
-    --ring: 262 83% 58%;
-    --radius: 1rem;
-    --chart-1: 262 83% 58%;
-    --chart-2: 213 65% 44%;
-    --chart-3: 142 71% 45%;
+    --border: 222 47% 15%;
+    --input: 222 47% 10%;
+    --ring: 271 91% 65%;
+    --radius: 1.25rem;
+    --chart-1: 271 91% 65%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
   }
@@ -37,36 +37,36 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body antialiased;
+    @apply bg-[#0f1117] text-foreground font-body antialiased;
   }
 }
 
 @layer components {
-  .card-gradient {
-    @apply bg-gradient-to-br from-card to-background border-none shadow-xl;
+  .card-mobile {
+    @apply bg-[#1f2937] border-[#374151] rounded-2xl p-6 shadow-sm;
   }
   
-  .glass-effect {
-    @apply bg-white/5 backdrop-blur-lg border border-white/10;
+  .btn-gradient {
+    @apply bg-gradient-to-r from-[#7c3aed] to-[#a855f7] hover:opacity-90 active:scale-95 transition-all text-white font-bold rounded-2xl;
+  }
+
+  .pill-tab {
+    @apply px-4 py-2 rounded-full text-xs font-bold transition-all;
   }
 }
 
-.mobile-nav-shadow {
-  box-shadow: 0 -10px 15px -3px rgba(0, 0, 0, 0.3);
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Smooth transitions for interactive elements */
-.active-scale {
-  @apply active:scale-95 transition-transform duration-150;
+.safe-top {
+  padding-top: env(safe-area-inset-top);
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 5px;
-}
-::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-::-webkit-scrollbar-thumb {
-  @apply bg-muted rounded-full;
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
 }

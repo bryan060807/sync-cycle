@@ -1,164 +1,103 @@
-
 "use client";
 
-import React from "react";
-import { 
-  Plus, 
-  Sparkles, 
-  Heart, 
-  Target, 
-  ListChecks, 
-  TrendingUp, 
-  ArrowRight,
-  MoreVertical,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
+import React, { useState } from "react";
 import { MobileNav } from "@/components/mobile-nav";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, orderBy, limit } from "firebase/firestore";
-import Link from "next/link";
-import { format } from "date-fns";
+import { MobileHeader } from "@/components/mobile-header";
+import { Sparkles, Brain, AlertCircle, Zap, ShieldAlert } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
-  const { user } = useUser();
-  const db = useFirestore();
+  const [signal, setSignal] = useState("green");
 
-  const episodesQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    return query(
-      collection(db, "episodes"),
-      where("userId", "==", user.uid),
-      orderBy("createdAt", "desc"),
-      limit(1)
-    );
-  }, [db, user]);
-
-  const goalsQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    return query(
-      collection(db, "goals"),
-      where("userId", "==", user.uid),
-      orderBy("progress", "desc"),
-      limit(2)
-    );
-  }, [db, user]);
-
-  const { data: recentEpisodes } = useCollection(episodesQuery);
-  const { data: activeGoals } = useCollection(goalsQuery);
-
-  const quickLinks = [
-    { label: "BPD Pulse", icon: <Heart className="h-5 w-5 text-red-500" />, href: "/bpd-tracker" },
-    { label: "Goals", icon: <Target className="h-5 w-5 text-primary" />, href: "/goals" },
-    { label: "Retro", icon: <TrendingUp className="h-5 w-5 text-accent" />, href: "/retro" },
-    { label: "Lists", icon: <ListChecks className="h-5 w-5 text-orange-500" />, href: "/lists" }
+  const alertPills = [
+    { label: "Crisis", color: "bg-[#f97316]", icon: <ShieldAlert className="h-4 w-4" /> },
+    { label: "Mood", color: "bg-[#ef4444]", icon: <AlertCircle className="h-4 w-4" /> },
+    { label: "Sync", color: "bg-[#8b5cf6]", icon: <Zap className="h-4 w-4" /> },
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <header className="px-6 pt-8 pb-4 flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold font-headline text-foreground">SyncCycle</h1>
-          <p className="text-xs text-muted-foreground">Welcome back, {user?.displayName || "friend"}</p>
-        </div>
-        <Link href="/settings">
-          <Button size="icon" variant="ghost" className="rounded-full">
-            <MoreVertical className="h-5 w-5" />
-          </Button>
-        </Link>
-      </header>
+    <div className="flex flex-col min-h-screen bg-[#0f1117]">
+      <MobileHeader />
 
-      <div className="px-6 space-y-6 flex-1 overflow-y-auto pb-24">
-        <Card className="bg-primary border-none text-primary-foreground overflow-hidden relative">
-          <div className="absolute right-0 top-0 opacity-10">
-            <Sparkles className="h-24 w-24 translate-x-4 -translate-y-4" />
+      <main className="flex-1 px-4 pt-20 pb-24 space-y-6">
+        <div className="pt-4">
+          <h2 className="text-3xl font-bold text-white mb-1">Good morning, Alex</h2>
+          <p className="text-gray-400 text-sm">How's your signal today?</p>
+        </div>
+
+        {/* Signal Selector */}
+        <div className="flex items-center gap-3 p-2 bg-[#1f2937] rounded-full border border-[#374151]">
+          {["red", "yellow", "green"].map((color) => (
+            <button
+              key={color}
+              onClick={() => setSignal(color)}
+              className={cn(
+                "h-10 flex-1 rounded-full transition-all flex items-center justify-center",
+                signal === color ? (
+                  color === "green" ? "bg-[#14b8a6] shadow-lg shadow-[#14b8a6]/20" :
+                  color === "yellow" ? "bg-yellow-500 shadow-lg shadow-yellow-500/20" :
+                  "bg-red-500 shadow-lg shadow-red-500/20"
+                ) : "bg-transparent opacity-30"
+              )}
+            >
+              <div className="h-3 w-3 rounded-full bg-white" />
+            </button>
+          ))}
+        </div>
+
+        {/* Alert Pills */}
+        <div className="grid grid-cols-3 gap-3">
+          {alertPills.map((pill) => (
+            <Button
+              key={pill.label}
+              className={cn(
+                "h-14 rounded-2xl border-none text-white font-bold flex flex-col gap-1 items-center justify-center",
+                pill.color
+              )}
+            >
+              {pill.icon}
+              <span className="text-[10px] uppercase tracking-widest">{pill.label}</span>
+            </Button>
+          ))}
+        </div>
+
+        {/* Score Card */}
+        <Card className="bg-[#1f2937] border-[#374151] rounded-3xl p-6 overflow-hidden relative">
+          <div className="absolute top-0 right-0 p-8 opacity-10">
+            <Sparkles className="h-32 w-32" />
           </div>
-          <CardContent className="pt-6">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <p className="text-xs opacity-80 mb-1">Weekly Pulse Score</p>
-                <h2 className="text-3xl font-bold">7.2</h2>
-              </div>
-              <Badge variant="secondary" className="bg-white/20 text-white border-none">
-                Steady
-              </Badge>
+          <CardContent className="p-0">
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-4">Baseline Score</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-6xl font-black text-white">8.4</span>
+              <span className="text-[#14b8a6] text-sm font-bold">+1.2</span>
             </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-[10px] opacity-70">
-                <span>Goal Progress</span>
-                <span>65%</span>
-              </div>
-              <Progress value={65} className="bg-white/20 h-1" />
-            </div>
+            <p className="text-gray-400 text-sm mt-4 leading-relaxed">
+              Your stability is trending up. Keep using your coping strategies!
+            </p>
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-2 gap-3">
-          {quickLinks.map((link) => (
-            <Link key={link.href} href={link.href}>
-              <Card className="hover:border-primary/50 transition-all active:scale-[0.98] border-none shadow-sm">
-                <CardContent className="p-4 flex flex-col items-center gap-2">
-                  <div className="p-2 rounded-xl bg-muted/50">
-                    {link.icon}
-                  </div>
-                  <span className="text-xs font-semibold">{link.label}</span>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <h3 className="font-semibold text-sm flex items-center gap-2">
-              <Heart className="h-4 w-4 text-red-500" /> Recent Pulse
-            </h3>
-            <Link href="/bpd-tracker" className="text-[10px] text-primary font-bold">VIEW ALL</Link>
-          </div>
-          {recentEpisodes?.[0] ? (
-            <Card className="border-none shadow-sm bg-white">
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <Badge variant="outline" className="text-[10px] border-red-200 text-red-500">
-                    Intensity: {recentEpisodes[0].intensity}/10
-                  </Badge>
-                  <span className="text-[10px] text-muted-foreground">
-                    {recentEpisodes[0].createdAt?.toDate ? format(recentEpisodes[0].createdAt.toDate(), "h:mm a") : "Just now"}
-                  </span>
-                </div>
-                <p className="text-sm font-medium line-clamp-1">{recentEpisodes[0].trigger}</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="text-center py-6 bg-muted/20 rounded-2xl border-2 border-dashed">
-              <p className="text-[10px] text-muted-foreground">No pulses logged today</p>
+        {/* Quick Insights */}
+        <div className="grid grid-cols-2 gap-4">
+          <Card className="bg-[#1f2937] border-[#374151] rounded-3xl p-4">
+            <div className="p-2 bg-[#7c3aed]/20 w-fit rounded-xl mb-3">
+              <Brain className="h-5 w-5 text-[#a855f7]" />
             </div>
-          )}
+            <p className="text-xs font-bold text-gray-500 mb-1">Coping Use</p>
+            <p className="text-xl font-black text-white">12/15</p>
+          </Card>
+          <Card className="bg-[#1f2937] border-[#374151] rounded-3xl p-4">
+            <div className="p-2 bg-[#14b8a6]/20 w-fit rounded-xl mb-3">
+              <Zap className="h-5 w-5 text-[#14b8a6]" />
+            </div>
+            <p className="text-xs font-bold text-gray-500 mb-1">Active Cycle</p>
+            <p className="text-xl font-black text-white">Day 4</p>
+          </Card>
         </div>
-
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <h3 className="font-semibold text-sm flex items-center gap-2">
-              <Target className="h-4 w-4 text-primary" /> Active Goals
-            </h3>
-            <Link href="/goals" className="text-[10px] text-primary font-bold">MANAGE</Link>
-          </div>
-          {activeGoals?.map((goal) => (
-            <Card key={goal.id} className="border-none shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium">{goal.title}</span>
-                  <span className="text-xs font-bold text-primary">{goal.progress}%</span>
-                </div>
-                <Progress value={goal.progress} className="h-1" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+      </main>
 
       <MobileNav activeTab="home" />
     </div>
