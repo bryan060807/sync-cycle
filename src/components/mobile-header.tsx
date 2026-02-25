@@ -3,7 +3,7 @@
 import React from "react";
 import { Menu, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, LayoutGrid, User, Activity, Shield, MessageSquare, Star, Calendar, Folder, Settings } from "lucide-react";
 import Link from "next/link";
@@ -29,6 +29,7 @@ export function MobileHeader() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="bg-[#0f1117] border-r border-[#374151] p-0 w-[280px]">
+          <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
           <div className="flex flex-col h-full pt-10">
             <div className="px-6 mb-8 flex items-center gap-2">
               <div className="p-2 bg-[#7c3aed] rounded-xl">
