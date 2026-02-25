@@ -1,10 +1,9 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileHeader } from "@/components/mobile-header";
-import { Sparkles, AlertCircle, Zap, ShieldAlert, History, Wallet, TrendingDown, TrendingUp, Heart } from "lucide-react";
+import { Sparkles, AlertCircle, Zap, ShieldAlert, History, Wallet, TrendingDown, TrendingUp, Heart, BrainCircuit } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -22,7 +21,6 @@ export default function Dashboard() {
   const [signal, setSignal] = useState("green");
   const [cooldowns, setCooldowns] = useState<{ [key: string]: number }>({});
 
-  // Fetch episodes for stats
   const episodesQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return query(
@@ -35,7 +33,6 @@ export default function Dashboard() {
 
   const { data: episodes, loading: loadingEpisodes } = useCollection(episodesQuery);
 
-  // Fetch transactions for budget health
   const transactionsQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return query(
@@ -47,7 +44,6 @@ export default function Dashboard() {
 
   const { data: transactions, loading: loadingTransactions } = useCollection(transactionsQuery);
 
-  // Fetch latest win for Recent Wins
   const winsQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return query(
@@ -130,12 +126,10 @@ export default function Dashboard() {
 
   const activeSignal = signals.find((s) => s.id === signal);
 
-  // Calculate Average Intensity (Baseline)
   const avgIntensity = episodes?.length 
     ? (episodes.reduce((acc, ep) => acc + (ep.intensity || 0), 0) / episodes.length).toFixed(1)
     : "0.0";
 
-  // Calculate Budget Health
   const totalExpense = transactions
     ?.filter((t: any) => t.type === 'expense')
     .reduce((sum: number, t: any) => sum + (t.amount || 0), 0) || 0;
@@ -150,17 +144,18 @@ export default function Dashboard() {
 
   const latestWin = recentWins?.[0];
 
+  const latestAiInsight = episodes?.find(e => e.aiInsights)?.aiInsights;
+
   return (
     <div className="flex flex-col min-h-screen bg-[#0f1117]">
       <MobileHeader />
 
-      <main className="flex-1 px-4 pt-20 pb-24 space-y-6">
+      <main className="flex-1 px-4 pt-20 pb-32 space-y-6">
         <div className="pt-4">
           <h2 className="text-3xl font-bold text-white mb-1 tracking-tight">Good morning, {user?.displayName || "Alex"}</h2>
           <p className="text-gray-500 text-sm font-medium">How's your signal today?</p>
         </div>
 
-        {/* Signal Selector */}
         <div className="space-y-4">
           <div className="flex items-center gap-3 p-1.5 bg-[#1f2937] rounded-full border border-[#374151] shadow-inner">
             {signals.map((s) => (
@@ -189,7 +184,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Crisis Buttons */}
         <div className="grid grid-cols-3 gap-3">
           {alertPills.map((pill) => (
             <button
@@ -207,7 +201,24 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Emotional Baseline Card */}
+        {/* AI Insight Card */}
+        {latestAiInsight && (
+          <Card 
+            className="bg-primary/5 border-primary/30 rounded-[2rem] p-6 shadow-xl cursor-pointer active:scale-[0.98] transition-transform"
+            onClick={() => router.push("/wellness")}
+          >
+            <CardContent className="p-0">
+              <div className="flex items-center gap-2 mb-3">
+                <BrainCircuit className="h-4 w-4 text-primary" />
+                <p className="text-[10px] font-black text-primary uppercase tracking-widest">Recent AI Insight</p>
+              </div>
+              <p className="text-xs text-gray-300 italic leading-relaxed font-medium">
+                "{latestAiInsight.insight}"
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         <Card className="bg-[#1f2937] border-[#374151] rounded-[2.5rem] p-8 overflow-hidden relative shadow-2xl">
           <div className="absolute -top-6 -right-6 p-8 opacity-5">
             <Sparkles className="h-48 w-48 text-white" />
@@ -231,7 +242,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Recent Wins Card */}
         <Card 
           className="bg-[#1f2937] border-[#374151] rounded-[2rem] p-6 shadow-xl active:scale-[0.98] transition-transform cursor-pointer"
           onClick={() => router.push("/gratitude")}
@@ -258,7 +268,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Budget Health Card */}
         <Card className="bg-[#1f2937] border-[#374151] rounded-[2rem] p-6 shadow-xl">
           <CardContent className="p-0 flex items-center justify-between">
             <div className="flex items-center gap-4">
