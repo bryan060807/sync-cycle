@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "Episode": {
@@ -66,6 +65,22 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["text", "userId", "createdAt"]
+    },
+    "HealthMetric": {
+      "title": "HealthMetric",
+      "description": "Vital signs and health data.",
+      "type": "object",
+      "properties": {
+        "weight": { "type": "number" },
+        "systolic": { "type": "number" },
+        "diastolic": { "type": "number" },
+        "bloodSugar": { "type": "number" },
+        "pulseRate": { "type": "number" },
+        "notes": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "createdAt"]
     }
   },
   "auth": {
@@ -91,6 +106,10 @@
     "/gratitude/{gratitudeId}": {
       "schema": "#/entities/Gratitude",
       "description": "Wins and gratitude notes."
+    },
+    "/health-metrics/{metricId}": {
+      "schema": "#/entities/HealthMetric",
+      "description": "Health data entries."
     }
   }
 }

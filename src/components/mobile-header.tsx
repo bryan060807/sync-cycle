@@ -5,7 +5,7 @@ import { Menu, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, LayoutGrid, User, Activity, Shield, MessageSquare, Star, Calendar, Folder, Settings } from "lucide-react";
+import { LogOut, LayoutGrid, User, Activity, Shield, MessageSquare, Star, Calendar, Folder, Settings, HeartPulse } from "lucide-react";
 import Link from "next/link";
 
 export function MobileHeader() {
@@ -13,6 +13,7 @@ export function MobileHeader() {
     { icon: <LayoutGrid />, label: "Dashboard", href: "/" },
     { icon: <User />, label: "Profile", href: "/settings" },
     { icon: <Activity />, label: "Wellness", href: "/wellness" },
+    { icon: <HeartPulse />, label: "Health", href: "/health" },
     { icon: <Shield />, label: "Crisis Plan", href: "/crisis" },
     { icon: <MessageSquare />, label: "Gratitude", href: "/gratitude" },
     { icon: <Star />, label: "Goals", href: "/goals" },
@@ -38,7 +39,7 @@ export function MobileHeader() {
               <span className="text-xl font-black text-white">SyncCycle</span>
             </div>
 
-            <div className="flex-1 px-3 space-y-1">
+            <div className="flex-1 px-3 space-y-1 overflow-y-auto no-scrollbar">
               {menuItems.map((item) => (
                 <Link key={item.label} href={item.href}>
                   <div className="flex items-center gap-4 px-3 py-3 rounded-xl hover:bg-[#1f2937] transition-colors text-gray-300">
