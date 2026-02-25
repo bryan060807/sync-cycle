@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from "react";
@@ -33,7 +32,7 @@ import { FirestorePermissionError } from "@/firebase/errors";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Goals() {
-  const { user, isUserLoading } = useUser();
+  const { user, loading: isUserLoading } = useUser();
   const auth = useAuth();
   const db = useFirestore();
   const { toast } = useToast();
@@ -94,30 +93,35 @@ export default function Goals() {
       .finally(() => setIsSaving(false));
   };
 
-  const handleDeleteGoal = async (id: string) => {
+  const handleDeleteGoal = (id: string) => {
     if (!db) return;
-    deleteDoc(doc(db, "goals", id)).then(() => {
-      toast({ title: "Goal removed" });
-    }).catch(async () => {
-      const permissionError = new FirestorePermissionError({
-        path: `goals/${id}`,
-        operation: "delete",
+    const goalRef = doc(db, "goals", id);
+    deleteDoc(goalRef)
+      .then(() => {
+        toast({ title: "Goal removed" });
+      })
+      .catch(async () => {
+        const permissionError = new FirestorePermissionError({
+          path: goalRef.path,
+          operation: "delete",
+        });
+        errorEmitter.emit("permission-error", permissionError);
       });
-      errorEmitter.emit("permission-error", permissionError);
-    });
   };
 
-  const handleUpdateProgress = async (id: string, currentProgress: number, increment: number) => {
+  const handleUpdateProgress = (id: string, currentProgress: number, increment: number) => {
     if (!db) return;
     const newProgress = Math.max(0, Math.min(100, currentProgress + increment));
-    updateDoc(doc(db, "goals", id), { progress: newProgress }).catch(async () => {
-      const permissionError = new FirestorePermissionError({
-        path: `goals/${id}`,
-        operation: "update",
-        requestResourceData: { progress: newProgress },
+    const goalRef = doc(db, "goals", id);
+    updateDoc(goalRef, { progress: newProgress })
+      .catch(async () => {
+        const permissionError = new FirestorePermissionError({
+          path: goalRef.path,
+          operation: "update",
+          requestResourceData: { progress: newProgress },
+        });
+        errorEmitter.emit("permission-error", permissionError);
       });
-      errorEmitter.emit("permission-error", permissionError);
-    });
   };
 
   const handleSignIn = () => {

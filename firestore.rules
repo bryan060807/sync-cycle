@@ -12,10 +12,6 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isDocOwner(data) {
-      return isSignedIn() && data != null && data.userId == request.auth.uid;
-    }
-
     // --- Collection Rules ---
 
     // User Profiles
@@ -32,60 +28,56 @@ service cloud.firestore {
         (resource.data.userId == request.auth.uid) || 
         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']))
       );
-      allow delete: if isDocOwner(resource.data);
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Emotional Episodes
     match /episodes/{episodeId} {
-      // Split read into get and list for clearer query validation
-      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.isAnonymized == true);
-      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.isAnonymized == true);
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.isAnonymized == true);
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isDocOwner(resource.data);
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Health Metrics
     match /health-metrics/{metricId} {
       allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isDocOwner(resource.data);
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Medications
     match /medications/{medId} {
       allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isDocOwner(resource.data);
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Gratitude / Wins
     match /gratitude/{winId} {
       allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isDocOwner(resource.data);
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Goals
     match /goals/{goalId} {
-      // Explicitly allow listing based on ownership or shared status
-      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.shared == true);
-      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.shared == true);
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.shared == true);
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isDocOwner(resource.data);
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Notifications
     match /notifications/{notifId} {
       allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isDocOwner(resource.data);
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Lists & Collections
     match /lists/{listId} {
       allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isDocOwner(resource.data);
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Partner Invites

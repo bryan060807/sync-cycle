@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -10,17 +9,14 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, orderBy, limit } from "firebase/firestore";
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
+import { collection, query, where, orderBy, limit, doc, updateDoc, setDoc } from "firebase/firestore";
 
 export default function Dashboard() {
-  const { user, isUserLoading } = useUser();
+  const { user, loading: isUserLoading } = useUser();
   const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
-
-  const [signal, setSignal] = useState("green");
-  const [cooldowns, setCooldowns] = useState<{ [key: string]: number }>({});
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -28,6 +24,17 @@ export default function Dashboard() {
       router.push("/login");
     }
   }, [user, isUserLoading, router]);
+
+  // Fetch user profile for signal state
+  const userProfileRef = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return doc(db, "users", user.uid);
+  }, [db, user]);
+  const { data: userProfile } = useDoc(userProfileRef);
+
+  const signal = userProfile?.currentSignal || "green";
+
+  const [cooldowns, setCooldowns] = useState<{ [key: string]: number }>({});
 
   const episodesQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
@@ -39,7 +46,7 @@ export default function Dashboard() {
     );
   }, [db, user]);
 
-  const { data: episodes, loading: loadingEpisodes } = useCollection(episodesQuery);
+  const { data: episodes, isLoading: loadingEpisodes } = useCollection(episodesQuery);
 
   const winsQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
@@ -51,7 +58,7 @@ export default function Dashboard() {
     );
   }, [db, user]);
 
-  const { data: recentWins, loading: loadingWins } = useCollection(winsQuery);
+  const { data: recentWins, isLoading: loadingWins } = useCollection(winsQuery);
 
   useEffect(() => {
     const saved = localStorage.getItem("crisis_cooldowns");
@@ -68,7 +75,7 @@ export default function Dashboard() {
     );
   }
 
-  if (!user) return null; // Redirecting in useEffect
+  if (!user) return null;
 
   const signals = [
     { id: "green", label: "Feeling Stable", color: "bg-[#14b8a6]" },
@@ -77,8 +84,15 @@ export default function Dashboard() {
   ];
 
   const handleSignalChange = (newSignal: string) => {
+    if (!db || !user) return;
     const oldSignal = signal;
-    setSignal(newSignal);
+    
+    const userRef = doc(db, "users", user.uid);
+    updateDoc(userRef, { currentSignal: newSignal })
+      .catch(() => {
+        // Fallback for new profiles
+        setDoc(userRef, { currentSignal: newSignal, id: user.uid, email: user.email || "guest", createdAt: new Date().toISOString() }, { merge: true });
+      });
 
     if (newSignal !== "green" && oldSignal === "green") {
       toast({
