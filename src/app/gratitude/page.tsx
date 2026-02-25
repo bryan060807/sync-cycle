@@ -40,7 +40,7 @@ export default function Gratitude() {
     );
   }, [db, user]);
 
-  const { data: archives, isLoading: loading } = useCollection(gratitudeQuery);
+  const { data: archives, isLoading } = useCollection(gratitudeQuery);
 
   const handleSendWin = () => {
     if (!text.trim() || !db || !user) return;
@@ -72,7 +72,7 @@ export default function Gratitude() {
 
   if (isUserLoading) {
     return (
-      <div className="flex flex-col min-h-screen bg-[#0f1117] items-center justify-center">
+      <div className="flex flex-col min-h-screen bg-[#0f1117] items-center justify-center text-white">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
@@ -81,20 +81,20 @@ export default function Gratitude() {
   if (!user) return null;
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0f1117]">
+    <div className="flex flex-col min-h-screen bg-[#0f1117] text-white">
       <MobileHeader />
 
-      <main className="flex-1 px-4 pt-20 pb-24 space-y-6">
+      <main className="flex-1 px-4 pt-20 pb-32 space-y-6">
         <div className="pt-4">
-          <h2 className="text-2xl font-bold text-white uppercase tracking-tight">Wins & Gratitude</h2>
-          <p className="text-gray-500 text-sm mt-1">What went well today?</p>
+          <h2 className="text-2xl font-black tracking-tight uppercase">Wins & Gratitude</h2>
+          <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-1">What went well today?</p>
         </div>
 
         {/* Input Box */}
-        <div className="bg-[#1f2937] p-6 rounded-3xl border border-[#374151] space-y-4 shadow-xl text-body">
-          <div className="space-y-2">
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Daily Prompt</p>
-            <p className="text-sm text-gray-300 italic font-medium">"One thing I'm proud of myself or my partner for today..."</p>
+        <div className="bg-[#1f2937] p-6 rounded-[2rem] border border-[#374151] space-y-4 shadow-xl text-body">
+          <div className="space-y-1">
+            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Daily Prompt</p>
+            <p className="text-sm text-gray-200 italic font-medium">"One thing I'm proud of myself or my partner for today..."</p>
           </div>
           <div className="relative">
             <Input 
@@ -110,7 +110,7 @@ export default function Gratitude() {
               size="icon" 
               onClick={handleSendWin}
               disabled={isSending || !text.trim()}
-              className="absolute right-2 top-2 h-10 w-10 bg-yellow-500 hover:bg-yellow-600 rounded-xl"
+              className="absolute right-2 top-2 h-10 w-10 bg-yellow-500 hover:bg-yellow-600 rounded-xl transition-transform active:scale-90"
             >
               {isSending ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Send className="h-4 w-4 text-white" />}
             </Button>
@@ -122,7 +122,7 @@ export default function Gratitude() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <History className="h-4 w-4 text-gray-500" />
-              <h3 className="font-bold text-gray-300 uppercase tracking-widest text-[10px]">Archived Wins</h3>
+              <h3 className="font-black text-gray-500 uppercase tracking-widest text-[10px]">Archived Wins</h3>
             </div>
             <span className="text-[10px] bg-[#1f2937] px-3 py-1 rounded-full border border-[#374151] text-gray-500 font-bold uppercase tracking-widest">
               {archives?.length || 0} Total
@@ -130,27 +130,30 @@ export default function Gratitude() {
           </div>
 
           <div className="space-y-3">
-            {loading ? (
+            {isLoading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
               </div>
             ) : archives?.map((win: any) => (
-              <Card key={win.id} className="bg-[#1f2937] border-[#374151] rounded-2xl p-4">
+              <Card key={win.id} className="bg-[#1f2937] border-[#374151] rounded-3xl p-4 shadow-md transition-transform active:scale-[0.98]">
                 <div className="flex items-start gap-4">
                   <div className="p-2 bg-yellow-500/10 rounded-xl">
                     <Heart className="h-4 w-4 text-yellow-500" />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-white font-medium italic">"{win.text}"</p>
-                    <p className="text-[10px] text-gray-600 mt-1 uppercase font-bold">
-                      {win.createdAt?.toDate ? format(win.createdAt.toDate(), "MMM dd") : "Just now"}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-200 font-medium italic leading-relaxed">"{win.text}"</p>
+                    <p className="text-[10px] text-gray-600 mt-2 uppercase font-black tracking-widest">
+                      {win.createdAt?.toDate ? format(win.createdAt.toDate(), "MMM dd, yyyy") : "Just now"}
                     </p>
                   </div>
                 </div>
               </Card>
             ))}
-            {!loading && archives?.length === 0 && (
-              <p className="text-center text-gray-500 text-xs py-12 bg-[#111827] rounded-3xl border border-dashed border-[#374151]">No wins archived yet. Start the cycle of praise!</p>
+            {!isLoading && archives?.length === 0 && (
+              <div className="text-center py-12 bg-[#111827] rounded-[2rem] border border-dashed border-[#374151]">
+                <p className="text-gray-700 text-[10px] font-black uppercase tracking-[0.2em]">No wins archived yet</p>
+                <p className="text-[9px] text-gray-800 uppercase mt-1">Start the cycle of praise!</p>
+              </div>
             )}
           </div>
         </div>
