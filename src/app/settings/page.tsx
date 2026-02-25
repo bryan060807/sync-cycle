@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 
 export default function Settings() {
   const settingsGroups = [
@@ -85,13 +86,5 @@ export default function Settings() {
 
       <MobileNav activeTab="settings" />
     </div>
-  );
-}
-
-function Badge({ children, variant, className }: any) {
-  return (
-    <span className={cn("px-2 py-0.5 rounded-full font-semibold", className)}>
-      {children}
-    </span>
   );
 }
