@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileHeader } from "@/components/mobile-header";
-import { Sparkles, AlertCircle, Zap, ShieldAlert, History, Wallet, TrendingDown, TrendingUp, Heart, BrainCircuit, Loader2 } from "lucide-react";
+import { Sparkles, AlertCircle, Zap, ShieldAlert, History, TrendingUp, Heart, BrainCircuit, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -38,8 +38,8 @@ export default function Dashboard() {
       const userRef = doc(db, "users", user.uid);
       setDoc(userRef, {
         id: user.uid,
-        email: user.email || "guest",
-        username: user.displayName || (user.isAnonymous ? "Guest" : user.email?.split('@')[0]) || "Anonymous",
+        email: user.email,
+        username: user.displayName || user.email?.split('@')[0] || "User",
         currentSignal: "green",
         createdAt: new Date().toISOString()
       }, { merge: true });
@@ -174,7 +174,7 @@ export default function Dashboard() {
       <main className="flex-1 px-4 pt-20 pb-32 space-y-6">
         <div className="pt-4 text-left">
           <h2 className="text-3xl font-black text-white mb-1 tracking-tighter uppercase leading-none">
-            Welcome, {user?.displayName || (user?.isAnonymous ? "Guest" : user?.email?.split('@')[0])}
+            Welcome, {user?.displayName || user?.email?.split('@')[0]}
           </h2>
           <p className="text-gray-500 text-sm font-black uppercase tracking-widest mt-2">Emotional Status</p>
         </div>

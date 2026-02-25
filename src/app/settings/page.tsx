@@ -1,10 +1,8 @@
-
 "use client";
 
 import React, { useState, useRef } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { 
-  User, 
   Bell, 
   Shield, 
   Smartphone, 
@@ -12,9 +10,7 @@ import {
   LogOut, 
   ChevronRight, 
   Camera,
-  Mail,
-  Edit2,
-  Check
+  Edit2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -174,7 +170,7 @@ export default function Settings() {
             </div>
             <p className="text-xs text-gray-500 font-bold">{user?.email}</p>
             <Badge variant="secondary" className="mt-2 bg-primary/20 text-primary border-none text-[10px] px-3 py-1 font-black uppercase tracking-widest">
-              Beta Access
+              SyncCycle Member
             </Badge>
           </div>
         </div>

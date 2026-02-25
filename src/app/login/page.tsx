@@ -7,9 +7,7 @@ import {
   Lock, 
   UserPlus, 
   LogIn, 
-  UserCircle2, 
   Loader2,
-  ChevronRight,
   ShieldCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,7 +16,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth, useUser } from "@/firebase";
 import { 
-  initiateAnonymousSignIn, 
   initiateEmailSignIn, 
   initiateEmailSignUp 
 } from "@/firebase/non-blocking-login";
@@ -74,13 +71,6 @@ export default function LoginPage() {
     handleAuthAction(
       () => initiateEmailSignUp(auth, email, password),
       "Creating your profile..."
-    );
-  };
-
-  const onAnonymousSignIn = () => {
-    handleAuthAction(
-      () => initiateAnonymousSignIn(auth),
-      "Entering as a guest..."
     );
   };
 
@@ -189,26 +179,6 @@ export default function LoginPage() {
                 </Button>
               </form>
             </TabsContent>
-
-            <div className="relative my-8">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-[#374151]"></div>
-              </div>
-              <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.2em]">
-                <span className="bg-[#1f2937] px-4 text-gray-600">OR</span>
-              </div>
-            </div>
-
-            <Button 
-              variant="outline" 
-              onClick={onAnonymousSignIn}
-              disabled={isLoading}
-              className="w-full h-14 border-[#374151] bg-[#111827]/50 text-gray-300 rounded-2xl hover:bg-[#111827] transition-all gap-3"
-            >
-              <UserCircle2 className="h-5 w-5" />
-              <span>Continue as Guest</span>
-              <ChevronRight className="h-4 w-4 ml-auto text-gray-600" />
-            </Button>
           </CardContent>
         </Tabs>
       </Card>
