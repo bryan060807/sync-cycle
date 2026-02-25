@@ -1,64 +1,82 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, LayoutGrid, Calendar as CalendarIcon, CheckCircle2, MoreVertical, Sparkles } from "lucide-react";
+import { 
+  Plus, 
+  Sparkles, 
+  Heart, 
+  Target, 
+  ListChecks, 
+  TrendingUp, 
+  ArrowRight,
+  MoreVertical,
+  BrainCircuit
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { MobileNav } from "@/components/mobile-nav";
+import { useUser, useFirestore, useCollection } from "@/firebase";
+import { collection, query, where, orderBy, limit } from "firebase/firestore";
 import Link from "next/link";
-
-interface Cycle {
-  id: string;
-  name: string;
-  description: string;
-  progress: number;
-  taskCount: number;
-  completedCount: number;
-}
+import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
-  const [cycles, setCycles] = useState<Cycle[]>([]);
+  const { user } = useUser();
+  const db = useFirestore();
 
-  useEffect(() => {
-    // Mock data for initial state
-    setCycles([
-      {
-        id: "1",
-        name: "Q1 Launch Plan",
-        description: "Main objectives for the first quarter product launch.",
-        progress: 65,
-        taskCount: 12,
-        completedCount: 8,
-      },
-      {
-        id: "2",
-        name: "Personal Growth",
-        description: "Learning goals and habit tracking for this year.",
-        progress: 30,
-        taskCount: 5,
-        completedCount: 1,
-      }
-    ]);
-  }, []);
+  // Fetch recent episodes
+  const episodesQuery = React.useMemo(() => {
+    if (!db || !user) return null;
+    return query(
+      collection(db, "episodes"),
+      where("userId", "==", user.uid),
+      orderBy("createdAt", "desc"),
+      limit(1)
+    );
+  }, [db, user]);
+
+  // Fetch goals
+  const goalsQuery = React.useMemo(() => {
+    if (!db || !user) return null;
+    return query(
+      collection(db, "goals"),
+      where("userId", "==", user.uid),
+      orderBy("progress", "desc"),
+      limit(2)
+    );
+  }, [db, user]);
+
+  const { data: recentEpisodes } = useCollection(episodesQuery);
+  const { data: activeGoals } = useCollection(goalsQuery);
+
+  const quickLinks = [
+    { label: "BPD Pulse", icon: <Heart className="h-5 w-5 text-red-500" />, href: "/bpd-tracker" },
+    { label: "Goals", icon: <Target className="h-5 w-5 text-primary" />, href: "/goals" },
+    { label: "Retro", icon: <TrendingUp className="h-5 w-5 text-accent" />, href: "/retro" },
+    { label: "Lists", icon: <ListChecks className="h-5 w-5 text-orange-500" />, href: "/lists" }
+  ];
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-background">
       {/* Header */}
       <header className="px-6 pt-8 pb-4 flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold font-headline text-foreground">My Cycles</h1>
-          <p className="text-sm text-muted-foreground">You have 2 active workspaces</p>
+          <h1 className="text-2xl font-bold font-headline text-foreground">SyncCycle</h1>
+          <p className="text-xs text-muted-foreground">Welcome back, {user?.displayName || "friend"}</p>
         </div>
-        <Button size="icon" variant="outline" className="rounded-full bg-white shadow-sm">
-          <MoreVertical className="h-5 w-5" />
-        </Button>
+        <Link href="/settings">
+          <Button size="icon" variant="ghost" className="rounded-full">
+            <MoreVertical className="h-5 w-5" />
+          </Button>
+        </Link>
       </header>
 
       {/* Main Content */}
-      <div className="px-6 space-y-6 flex-1 overflow-y-auto">
-        {/* Quick Stats / Summary Card */}
+      <div className="px-6 space-y-6 flex-1 overflow-y-auto pb-24">
+        {/* Daily Summary Card */}
         <Card className="bg-primary border-none text-primary-foreground overflow-hidden relative">
           <div className="absolute right-0 top-0 opacity-10">
             <Sparkles className="h-24 w-24 translate-x-4 -translate-y-4" />
@@ -66,61 +84,87 @@ export default function Dashboard() {
           <CardContent className="pt-6">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <p className="text-sm opacity-80 mb-1">Total Progress</p>
-                <h2 className="text-3xl font-bold">58%</h2>
+                <p className="text-xs opacity-80 mb-1">Weekly Pulse Score</p>
+                <h2 className="text-3xl font-bold">7.2</h2>
               </div>
               <Badge variant="secondary" className="bg-white/20 text-white border-none">
-                On Track
+                Steady
               </Badge>
             </div>
-            <Progress value={58} className="bg-white/20" />
-            <p className="text-xs mt-4 opacity-70">
-              9/17 tasks completed across all cycles
-            </p>
+            <div className="space-y-2">
+              <div className="flex justify-between text-[10px] opacity-70">
+                <span>Goal Progress</span>
+                <span>65%</span>
+              </div>
+              <Progress value={65} className="bg-white/20 h-1" />
+            </div>
           </CardContent>
         </Card>
 
-        {/* Cycles List */}
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="font-semibold text-lg flex items-center gap-2">
-              Recent Workspaces
-            </h3>
-            <Button variant="ghost" size="sm" className="text-accent hover:text-accent/80 font-medium">
-              View All
-            </Button>
-          </div>
-
-          {cycles.map((cycle) => (
-            <Link key={cycle.id} href={`/cycles/${cycle.id}`} className="block transition-transform active:scale-[0.98]">
-              <Card className="hover:border-primary/50 transition-colors shadow-sm">
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">{cycle.name}</CardTitle>
-                    <Badge variant="outline" className="text-[10px] py-0">
-                      {cycle.completedCount}/{cycle.taskCount}
-                    </Badge>
+        {/* Quick Actions Grid */}
+        <div className="grid grid-cols-2 gap-3">
+          {quickLinks.map((link) => (
+            <Link key={link.href} href={link.href}>
+              <Card className="hover:border-primary/50 transition-all active:scale-[0.98] border-none shadow-sm">
+                <CardContent className="p-4 flex flex-col items-center gap-2">
+                  <div className="p-2 rounded-xl bg-muted/50">
+                    {link.icon}
                   </div>
-                  <CardDescription className="line-clamp-1">{cycle.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-3">
-                    <Progress value={cycle.progress} className="h-2" />
-                    <span className="text-xs font-medium text-muted-foreground w-8">
-                      {cycle.progress}%
-                    </span>
-                  </div>
+                  <span className="text-xs font-semibold">{link.label}</span>
                 </CardContent>
               </Card>
             </Link>
           ))}
+        </div>
 
-          <Button 
-            className="w-full h-14 border-dashed border-2 hover:bg-muted/50 text-muted-foreground" 
-            variant="outline"
-          >
-            <Plus className="mr-2 h-5 w-5" /> Create New Cycle
-          </Button>
+        {/* Recent Mood Cycle */}
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <h3 className="font-semibold text-sm flex items-center gap-2">
+              <Heart className="h-4 w-4 text-red-500" /> Recent Pulse
+            </h3>
+            <Link href="/bpd-tracker" className="text-[10px] text-primary font-bold">VIEW ALL</Link>
+          </div>
+          {recentEpisodes?.[0] ? (
+            <Card className="border-none shadow-sm bg-white">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <Badge variant="outline" className="text-[10px] border-red-200 text-red-500">
+                    Intensity: {recentEpisodes[0].intensity}/10
+                  </Badge>
+                  <span className="text-[10px] text-muted-foreground">
+                    {recentEpisodes[0].createdAt?.toDate ? format(recentEpisodes[0].createdAt.toDate(), "h:mm a") : "Just now"}
+                  </span>
+                </div>
+                <p className="text-sm font-medium line-clamp-1">{recentEpisodes[0].trigger}</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="text-center py-6 bg-muted/20 rounded-2xl border-2 border-dashed">
+              <p className="text-[10px] text-muted-foreground">No pulses logged today</p>
+            </div>
+          )}
+        </div>
+
+        {/* Active Goals */}
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <h3 className="font-semibold text-sm flex items-center gap-2">
+              <Target className="h-4 w-4 text-primary" /> Active Goals
+            </h3>
+            <Link href="/goals" className="text-[10px] text-primary font-bold">MANAGE</Link>
+          </div>
+          {activeGoals?.map((goal) => (
+            <Card key={goal.id} className="border-none shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium">{goal.title}</span>
+                  <span className="text-xs font-bold text-primary">{goal.progress}%</span>
+                </div>
+                <Progress value={goal.progress} className="h-1" />
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
 

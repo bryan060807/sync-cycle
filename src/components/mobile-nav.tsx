@@ -1,7 +1,8 @@
+
 "use client";
 
 import React from "react";
-import { LayoutGrid, CheckSquare, Settings, Sparkles, Home } from "lucide-react";
+import { LayoutGrid, CheckSquare, Settings, Sparkles, Home, Target, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
@@ -22,14 +23,14 @@ export function MobileNav({ activeTab }: MobileNavProps) {
         <span className={cn("text-[10px] font-medium", activeTab === "home" ? "text-primary" : "text-muted-foreground")}>Home</span>
       </Link>
 
-      <Link href="/tasks" className="flex flex-col items-center gap-1 w-16">
+      <Link href="/bpd-tracker" className="flex flex-col items-center gap-1 w-16">
         <div className={cn(
           "p-2 rounded-xl transition-colors",
-          activeTab === "tasks" ? "bg-primary/10 text-primary" : "text-muted-foreground"
+          activeTab === "tasks" ? "bg-red-500/10 text-red-500" : "text-muted-foreground"
         )}>
-          <CheckSquare className="h-6 w-6" />
+          <Heart className="h-6 w-6" />
         </div>
-        <span className={cn("text-[10px] font-medium", activeTab === "tasks" ? "text-primary" : "text-muted-foreground")}>Tasks</span>
+        <span className={cn("text-[10px] font-medium", activeTab === "tasks" ? "text-red-500" : "text-muted-foreground")}>Pulse</span>
       </Link>
 
       <Link href="/ai-tools" className="flex flex-col items-center gap-1 w-16">
@@ -39,7 +40,7 @@ export function MobileNav({ activeTab }: MobileNavProps) {
         )}>
           <Sparkles className="h-6 w-6" />
         </div>
-        <span className={cn("text-[10px] font-medium", activeTab === "ai" ? "text-primary" : "text-muted-foreground")}>AI Tools</span>
+        <span className={cn("text-[10px] font-medium", activeTab === "ai" ? "text-primary" : "text-muted-foreground")}>AI</span>
       </Link>
 
       <Link href="/settings" className="flex flex-col items-center gap-1 w-16">

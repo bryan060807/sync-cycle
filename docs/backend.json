@@ -1,0 +1,81 @@
+
+{
+  "entities": {
+    "Episode": {
+      "title": "Episode",
+      "description": "A recorded emotional episode for BPD tracking.",
+      "type": "object",
+      "properties": {
+        "intensity": { "type": "number", "description": "Intensity level from 1-10." },
+        "trigger": { "type": "string", "description": "What triggered the episode." },
+        "notes": { "type": "string", "description": "Additional context or thoughts." },
+        "copingSkillId": { "type": "string", "description": "ID of the coping skill used." },
+        "userId": { "type": "string", "description": "UID of the user who logged the episode." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["intensity", "trigger", "userId", "createdAt"]
+    },
+    "Goal": {
+      "title": "Goal",
+      "description": "A personal or shared goal.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "targetDate": { "type": "string" },
+        "isMutual": { "type": "boolean" },
+        "progress": { "type": "number" },
+        "userId": { "type": "string" },
+        "coupleId": { "type": "string" }
+      },
+      "required": ["title", "userId", "progress"]
+    },
+    "List": {
+      "title": "List",
+      "description": "A collection of items/tasks.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "userId": { "type": "string" },
+        "items": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "userId", "createdAt"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "A financial record for retro analysis.",
+      "type": "object",
+      "properties": {
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["income", "expense"] },
+        "category": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["amount", "type", "userId", "createdAt"]
+    }
+  },
+  "auth": {
+    "providers": ["password"]
+  },
+  "firestore": {
+    "/episodes/{episodeId}": {
+      "schema": "#/entities/Episode",
+      "description": "User emotional episodes."
+    },
+    "/goals/{goalId}": {
+      "schema": "#/entities/Goal",
+      "description": "Shared and personal goals."
+    },
+    "/lists/{listId}": {
+      "schema": "#/entities/List",
+      "description": "Task and item lists."
+    },
+    "/transactions/{transactionId}": {
+      "schema": "#/entities/Transaction",
+      "description": "Financial records."
+    }
+  }
+}
