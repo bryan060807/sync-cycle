@@ -3,21 +3,38 @@
 import React, { useState, useEffect } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileHeader } from "@/components/mobile-header";
-import { Sparkles, Brain, AlertCircle, Zap, ShieldAlert } from "lucide-react";
+import { Sparkles, Brain, AlertCircle, Zap, ShieldAlert, History } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { useUser, useFirestore, useCollection } from "@/firebase";
+import { collection, query, where, orderBy, limit } from "firebase/firestore";
 
 export default function Dashboard() {
+  const { user } = useUser();
+  const db = useFirestore();
+  const router = useRouter();
+  const { toast } = useToast();
+
   const [signal, setSignal] = useState("green");
   const [cooldowns, setCooldowns] = useState<{ [key: string]: number }>({});
-  const { toast } = useToast();
-  const router = useRouter();
+
+  // Fetch episodes for stats
+  const episodesQuery = React.useMemo(() => {
+    if (!db || !user) return null;
+    return query(
+      collection(db, "episodes"),
+      where("userId", "==", user.uid),
+      orderBy("createdAt", "desc"),
+      limit(50)
+    );
+  }, [db, user]);
+
+  const { data: episodes, loading: loadingEpisodes } = useCollection(episodesQuery);
 
   useEffect(() => {
-    // Load cooldowns from localStorage on mount
     const saved = localStorage.getItem("crisis_cooldowns");
     if (saved) {
       setCooldowns(JSON.parse(saved));
@@ -68,12 +85,10 @@ export default function Dashboard() {
       return;
     }
 
-    // Update cooldown
     const newCooldowns = { ...cooldowns, [id]: now };
     setCooldowns(newCooldowns);
     localStorage.setItem("crisis_cooldowns", JSON.stringify(newCooldowns));
 
-    // Simulate sending unique alert to partner
     toast({
       title: "Alert Sent to Partner",
       description: `Your partner has been notified: "${label}"`,
@@ -89,13 +104,18 @@ export default function Dashboard() {
 
   const activeSignal = signals.find((s) => s.id === signal);
 
+  // Calculate Average Intensity (Baseline)
+  const avgIntensity = episodes?.length 
+    ? (episodes.reduce((acc, ep) => acc + (ep.intensity || 0), 0) / episodes.length).toFixed(1)
+    : "0.0";
+
   return (
     <div className="flex flex-col min-h-screen bg-[#0f1117]">
       <MobileHeader />
 
       <main className="flex-1 px-4 pt-20 pb-24 space-y-6">
         <div className="pt-4">
-          <h2 className="text-3xl font-bold text-white mb-1 tracking-tight">Good morning, Alex</h2>
+          <h2 className="text-3xl font-bold text-white mb-1 tracking-tight">Good morning, {user?.displayName || "Alex"}</h2>
           <p className="text-gray-500 text-sm font-medium">How's your signal today?</p>
         </div>
 
@@ -146,19 +166,21 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Score Card */}
+        {/* Emotional Baseline Score Card */}
         <Card className="bg-[#1f2937] border-[#374151] rounded-[2.5rem] p-8 overflow-hidden relative shadow-2xl">
           <div className="absolute -top-6 -right-6 p-8 opacity-5">
             <Sparkles className="h-48 w-48 text-white" />
           </div>
           <CardContent className="p-0">
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.25em] mb-4">Baseline Stability</p>
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.25em] mb-4">Emotional Baseline</p>
             <div className="flex items-baseline gap-2">
-              <span className="text-7xl font-black text-white tracking-tighter">8.4</span>
-              <span className="text-[#14b8a6] text-sm font-black">+1.2</span>
+              <span className="text-7xl font-black text-white tracking-tighter">
+                {loadingEpisodes ? "--" : avgIntensity}
+              </span>
+              <span className="text-gray-400 text-xl font-medium">/ 10</span>
             </div>
             <p className="text-gray-400 text-sm mt-5 leading-relaxed font-medium">
-              Your stability is trending up. Day 12 of consecutive logs.
+              Average pulse intensity based on your recent check-ins.
             </p>
           </CardContent>
         </Card>
@@ -167,17 +189,17 @@ export default function Dashboard() {
         <div className="grid grid-cols-2 gap-4">
           <Card className="bg-[#1f2937] border-[#374151] rounded-[2rem] p-6 shadow-xl border-l-4 border-l-[#a855f7]">
             <div className="p-2.5 bg-[#7c3aed]/10 w-fit rounded-2xl mb-4">
-              <Brain className="h-5 w-5 text-[#a855f7]" />
+              <History className="h-5 w-5 text-[#a855f7]" />
             </div>
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Coping Use</p>
-            <p className="text-2xl font-black text-white">12/15</p>
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Recent Entries</p>
+            <p className="text-2xl font-black text-white">{episodes?.length || 0}</p>
           </Card>
           <Card className="bg-[#1f2937] border-[#374151] rounded-[2rem] p-6 shadow-xl border-l-4 border-l-[#14b8a6]">
             <div className="p-2.5 bg-[#14b8a6]/10 w-fit rounded-2xl mb-4">
-              <Zap className="h-5 w-5 text-[#14b8a6]" />
+              <Brain className="h-5 w-5 text-[#14b8a6]" />
             </div>
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Active Cycle</p>
-            <p className="text-2xl font-black text-white">Day 4</p>
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Cycle Status</p>
+            <p className="text-2xl font-black text-white">{episodes && episodes.length > 0 ? "Tracking" : "Idle"}</p>
           </Card>
         </div>
       </main>
