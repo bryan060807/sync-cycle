@@ -2,94 +2,113 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * CORE PHILOSOPHY
-     * This ruleset enforces a strict private-ownership model for the CycleSync application. 
-     * Access control is fundamentally tied to the authenticated user's ID (UID), ensuring 
-     * that users can only interact with their own profile, workspaces, and tasks.
-     *
-     * DATA STRUCTURE
-     * The data is organized hierarchically to facilitate efficient querying and 
-     * straightforward security enforcement:
-     * - /users/{userId}: The root document for a user's profile.
-     * - /users/{userId}/workspaces/{workspaceId}: Workspaces belonging to that user.
-     * - /users/{userId}/workspaces/{workspaceId}/tasks/{taskId}: Tasks within a specific workspace.
-     *
-     * KEY SECURITY DECISIONS
-     * 1. Path-Based Authorization: By nesting all user data under a path containing their 
-     *    UID ({userId}), we leverage the database structure itself to enforce security.
-     * 2. Denormalization for Performance: Critical authorization fields (like ownerId 
-     *    and workspaceId) are stored directly on documents. This allows rules to verify 
-     *    relationships without performing expensive get() lookups on parent documents.
-     * 3. Immutability of Relationships: Once a workspace or task is created, the fields 
-     *    linking it to its owner or parent workspace are immutable to prevent data hijacking.
-     * 4. Prototyping Flexibility: While authorization is strictly enforced, the rules 
-     *    remain flexible regarding the specific schema of content fields (titles, 
-     *    descriptions, etc.) to allow for rapid frontend iteration.
-     */
-
     // --- Helper Functions ---
 
-    /** @description Checks if the request is from an authenticated user. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** @description Checks if the authenticated user's UID matches the provided userId. */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** @description Combines ownership check with a check that the document exists. Used for updates and deletes. */
-    function isExistingOwner(userId) {
-      return resource != null && isOwner(userId);
+    function isDataOwner() {
+      return isSignedIn() && request.auth.uid == resource.data.userId;
+    }
+
+    function isRequestOwner() {
+      return isSignedIn() && request.auth.uid == request.resource.data.userId;
     }
 
     // --- Collection Rules ---
 
-    /**
-     * @description Rules for individual user profiles. Users can only manage their own profile.
-     * @path /users/{userId}
-     * @allow (create) User 'abc' creates document '/users/abc'.
-     * @deny (create) User 'abc' attempts to create document '/users/xyz'.
-     * @principle Self-creation and strict ownership of the root user document.
-     */
+    // User Profiles
     match /users/{userId} {
       allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
     }
 
-    /**
-     * @description Rules for workspaces. Workspaces are private to the user who created them.
-     * @path /users/{userId}/workspaces/{workspaceId}
-     * @allow (update) User 'abc' updates their workspace '/users/abc/workspaces/ws1'.
-     * @deny (list) User 'abc' tries to list workspaces at '/users/xyz/workspaces'.
-     * @principle Relational integrity via denormalized ownerId field.
-     */
-    match /users/{userId}/workspaces/{workspaceId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.ownerId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.ownerId == resource.data.ownerId;
-      allow delete: if isExistingOwner(userId);
+    // Forum Posts: Signed-in users can read and create. Only owner can update/delete.
+    match /forum-posts/{postId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        (resource.data.userId == request.auth.uid) || 
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']))
+      );
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
 
-      /**
-       * @description Rules for tasks within a workspace. Access is restricted to the workspace owner.
-       * @path /users/{userId}/workspaces/{workspaceId}/tasks/{taskId}
-       * @allow (create) User 'abc' creates a task in their own workspace.
-       * @deny (get) User 'abc' tries to read a task in User 'xyz's workspace.
-       * @principle Deeply nested ownership verification using path wildcards and denormalized data.
-       */
-      match /tasks/{taskId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.workspaceId == workspaceId;
-        allow update: if isExistingOwner(userId) && request.resource.data.workspaceId == resource.data.workspaceId;
-        allow delete: if isExistingOwner(userId);
+    // Emotional Episodes (Wellness)
+    match /episodes/{episodeId} {
+      allow read, list: if isDataOwner();
+      allow create: if isRequestOwner();
+      allow update, delete: if isDataOwner();
+    }
+
+    // Health Metrics
+    match /health-metrics/{metricId} {
+      allow read, list: if isDataOwner();
+      allow create: if isRequestOwner();
+      allow update, delete: if isDataOwner();
+    }
+
+    // Medications
+    match /medications/{medId} {
+      allow read, list: if isDataOwner();
+      allow create: if isRequestOwner();
+      allow update, delete: if isDataOwner();
+    }
+
+    // Gratitude / Wins
+    match /gratitude/{winId} {
+      allow read, list: if isDataOwner();
+      allow create: if isRequestOwner();
+      allow update, delete: if isDataOwner();
+    }
+
+    // Notifications
+    match /notifications/{notifId} {
+      allow read, list: if isDataOwner();
+      allow create: if isRequestOwner();
+      allow update, delete: if isDataOwner();
+    }
+
+    // Lists & Collections
+    match /lists/{listId} {
+      allow read, list: if isDataOwner();
+      allow create: if isRequestOwner();
+      allow update, delete: if isDataOwner();
+    }
+
+    // Partner Invites
+    match /invites/{inviteId} {
+      allow read, list: if isSignedIn() && (
+        request.auth.uid == resource.data.senderId || 
+        request.auth.token.email == resource.data.receiverEmail
+      );
+      allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.senderId || 
+        request.auth.token.email == resource.data.receiverEmail
+      );
+      allow delete: if isSignedIn() && request.auth.uid == resource.data.senderId;
+    }
+
+    // Couples & Shared Data
+    match /couples/{coupleId} {
+      allow read: if isSignedIn() && request.auth.uid in resource.data.uids;
+      allow create: if isSignedIn() && request.auth.uid in request.resource.data.uids;
+      allow update: if isSignedIn() && request.auth.uid in resource.data.uids;
+      
+      match /messages/{messageId} {
+        allow read, list: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/couples/$(coupleId)).data.uids;
+        allow create: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/couples/$(coupleId)).data.uids;
       }
     }
 
-    // Explicitly deny access to any other paths
     match /{document=**} {
       allow read, write: if false;
     }

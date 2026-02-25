@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from "react";
@@ -27,7 +26,7 @@ import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
 
 export default function ForumsPage() {
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
   const db = useFirestore();
   const [isPosting, setIsPosting] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -36,15 +35,15 @@ export default function ForumsPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   const postsQuery = useMemoFirebase(() => {
-    if (!db) return null;
+    if (!db || !user) return null; // Wait for user to query for better UX and permission alignment
     return query(
       collection(db, "forum-posts"),
       orderBy("createdAt", "desc"),
       limit(20)
     );
-  }, [db]);
+  }, [db, user]);
 
-  const { data: posts, loading } = useCollection(postsQuery);
+  const { data: posts, isLoading: postsLoading } = useCollection(postsQuery);
 
   const handleCreatePost = () => {
     if (!db || !user || !newTitle.trim() || !newContent.trim()) return;
@@ -81,7 +80,7 @@ export default function ForumsPage() {
   };
 
   const handleLike = (id: string) => {
-    if (!db) return;
+    if (!db || !user) return;
     const postRef = doc(db, "forum-posts", id);
     updateDoc(postRef, {
       likes: increment(1)
@@ -94,14 +93,16 @@ export default function ForumsPage() {
     });
   };
 
+  const showLoading = userLoading || (postsLoading && !!user);
+
   return (
     <div className="flex flex-col min-h-screen bg-[#0f1117]">
       <MobileHeader />
 
-      <main className="flex-1 px-4 pt-20 pb-32 space-y-6">
+      <main className="flex-1 px-4 pt-20 pb-32 space-y-6 text-white">
         <div className="pt-4 flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">Community</h2>
+            <h2 className="text-2xl font-bold tracking-tight">Community</h2>
             <p className="text-gray-500 text-sm mt-1">Connect and share with others.</p>
           </div>
           <Dialog open={isPosting} onOpenChange={setIsPosting}>
@@ -166,7 +167,7 @@ export default function ForumsPage() {
         </div>
 
         <div className="space-y-4">
-          {loading ? (
+          {showLoading ? (
             <div className="flex justify-center py-20">
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
             </div>
@@ -216,7 +217,7 @@ export default function ForumsPage() {
             </Card>
           ))}
 
-          {!loading && posts?.length === 0 && (
+          {!showLoading && posts?.length === 0 && (
             <div className="text-center py-20 bg-[#111827] rounded-[2.5rem] border border-dashed border-[#374151]">
               <Users className="h-12 w-12 text-gray-800 mx-auto mb-4" />
               <p className="text-sm font-bold text-gray-500 uppercase tracking-[0.2em]">The forums are quiet</p>
