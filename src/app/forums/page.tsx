@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -29,7 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
 export default function ForumsPage() {
-  const { user, isUserLoading } = useUser();
+  const { user, loading: isUserLoading } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
@@ -63,7 +62,7 @@ export default function ForumsPage() {
 
     const data = {
       userId: user.uid,
-      userDisplayName: user.displayName || (user.isAnonymous ? "Guest" : user.email?.split('@')[0]),
+      userDisplayName: user.displayName || (user.isAnonymous ? "Guest" : user.email?.split('@')[0]) || "Anonymous",
       userPhotoUrl: user.photoURL || "",
       title: newTitle.trim(),
       content: newContent.trim(),
@@ -251,7 +250,7 @@ export default function ForumsPage() {
         </div>
       </main>
 
-      <MobileNav activeTab="home" />
+      <MobileNav />
     </div>
   );
 }

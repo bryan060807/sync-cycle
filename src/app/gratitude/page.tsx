@@ -1,29 +1,34 @@
-
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileHeader } from "@/components/mobile-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Heart, Send, History, Loader2, AlertCircle } from "lucide-react";
-import { useUser, useFirestore, useCollection, useMemoFirebase, useAuth } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp, query, where, orderBy, limit } from "firebase/firestore";
-import { signInAnonymously } from "firebase/auth";
 import { format } from "date-fns";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 export default function Gratitude() {
-  const { user, isUserLoading } = useUser();
-  const auth = useAuth();
+  const { user, loading: isUserLoading } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
+  const router = useRouter();
   
   const [text, setText] = useState("");
   const [isSending, setIsSending] = useState(false);
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, isUserLoading, router]);
 
   const gratitudeQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
@@ -65,10 +70,6 @@ export default function Gratitude() {
       });
   };
 
-  const handleSignIn = () => {
-    signInAnonymously(auth);
-  };
-
   if (isUserLoading) {
     return (
       <div className="flex flex-col min-h-screen bg-[#0f1117] items-center justify-center">
@@ -77,24 +78,7 @@ export default function Gratitude() {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="flex flex-col min-h-screen bg-[#0f1117]">
-        <MobileHeader />
-        <main className="flex-1 px-4 pt-20 flex flex-col items-center justify-center text-center space-y-4">
-          <AlertCircle className="h-12 w-12 text-gray-500" />
-          <h2 className="text-xl font-bold text-white uppercase tracking-tight">Login Required</h2>
-          <p className="text-gray-500 text-sm max-w-xs">
-            You need to be signed in to log your daily wins and view your gratitude archive.
-          </p>
-          <Button onClick={handleSignIn} className="btn-gradient w-full max-w-xs h-12 rounded-xl">
-            Enter Anonymously
-          </Button>
-        </main>
-        <MobileNav activeTab="home" />
-      </div>
-    );
-  }
+  if (!user) return null;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0f1117]">
@@ -172,7 +156,7 @@ export default function Gratitude() {
         </div>
       </main>
 
-      <MobileNav activeTab="home" />
+      <MobileNav />
     </div>
   );
 }

@@ -1,4 +1,3 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -13,13 +12,16 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function isDocOwner(data) {
+      return isSignedIn() && data.userId == request.auth.uid;
+    }
+
     // --- Collection Rules ---
 
     // User Profiles
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow create, update: if isOwner(userId);
-      allow delete: if false;
+      allow write: if isOwner(userId);
     }
 
     // Forum Posts
@@ -40,28 +42,28 @@ service cloud.firestore {
         resource.data.isAnonymized == true
       );
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update, delete: if isDocOwner(resource.data);
     }
 
     // Health Metrics
     match /health-metrics/{metricId} {
       allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update, delete: if isDocOwner(resource.data);
     }
 
     // Medications
     match /medications/{medId} {
       allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update, delete: if isDocOwner(resource.data);
     }
 
     // Gratitude / Wins
     match /gratitude/{winId} {
       allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update, delete: if isDocOwner(resource.data);
     }
 
     // Goals
@@ -71,21 +73,21 @@ service cloud.firestore {
         resource.data.shared == true
       );
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update, delete: if isDocOwner(resource.data);
     }
 
     // Notifications
     match /notifications/{notifId} {
       allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update, delete: if isDocOwner(resource.data);
     }
 
     // Lists & Collections
     match /lists/{listId} {
       allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update, delete: if isDocOwner(resource.data);
     }
 
     // Partner Invites
