@@ -26,12 +26,13 @@ export default function LoginPage() {
   const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const { user, loading: isUserLoading } = useUser();
+  const { user, isUserLoading } = useUser();
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Redirect to dashboard once authenticated
   useEffect(() => {
     if (user && !isUserLoading) {
       router.push("/");
@@ -42,15 +43,17 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await action();
+      // Note: non-blocking-login functions handle their own catches, 
+      // but we wrap here for immediate UI feedback.
       toast({
-        title: "Auth Initiated",
+        title: "Authenticating...",
         description: successMessage,
       });
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Authentication Error",
-        description: error.message || "Something went wrong. Please check your credentials.",
+        title: "Auth Error",
+        description: error.message || "Failed to initiate login.",
       });
       setIsLoading(false);
     }
@@ -61,7 +64,7 @@ export default function LoginPage() {
     if (!email || !password) return;
     handleAuthAction(
       () => initiateEmailSignIn(auth, email, password),
-      "Checking credentials..."
+      "Please wait while we check your credentials."
     );
   };
 
@@ -70,9 +73,17 @@ export default function LoginPage() {
     if (!email || !password) return;
     handleAuthAction(
       () => initiateEmailSignUp(auth, email, password),
-      "Creating your profile..."
+      "We're setting up your secure profile."
     );
   };
+
+  if (isUserLoading) {
+    return (
+      <div className="flex flex-col min-h-screen bg-[#0f1117] items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0f1117] p-6 justify-center">
