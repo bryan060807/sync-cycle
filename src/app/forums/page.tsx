@@ -12,10 +12,7 @@ import {
   Share2, 
   Search, 
   Loader2, 
-  Filter,
-  MessageSquare,
-  TrendingUp,
-  Clock
+  Filter
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,6 +24,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, updateDoc, doc, increment } from "firebase/firestore";
 import { format } from "date-fns";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 export default function ForumsPage() {
   const { user } = useUser();
@@ -48,7 +47,7 @@ export default function ForumsPage() {
 
   const { data: posts, loading } = useCollection(postsQuery);
 
-  const handleCreatePost = async () => {
+  const handleCreatePost = () => {
     if (!db || !user || !newTitle.trim() || !newContent.trim()) return;
     setIsSaving(true);
 
@@ -63,22 +62,36 @@ export default function ForumsPage() {
       createdAt: serverTimestamp(),
     };
 
-    try {
-      await addDoc(collection(db, "forum-posts"), data);
-      setNewTitle("");
-      setNewContent("");
-      setIsPosting(false);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsSaving(false);
-    }
+    addDoc(collection(db, "forum-posts"), data)
+      .then(() => {
+        setNewTitle("");
+        setNewContent("");
+        setIsPosting(false);
+      })
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: "forum-posts",
+          operation: "create",
+          requestResourceData: data,
+        });
+        errorEmitter.emit("permission-error", permissionError);
+      })
+      .finally(() => {
+        setIsSaving(false);
+      });
   };
 
   const handleLike = (id: string) => {
     if (!db) return;
-    updateDoc(doc(db, "forum-posts", id), {
+    const postRef = doc(db, "forum-posts", id);
+    updateDoc(postRef, {
       likes: increment(1)
+    }).catch(async (error) => {
+      const permissionError = new FirestorePermissionError({
+        path: postRef.path,
+        operation: "update",
+      });
+      errorEmitter.emit("permission-error", permissionError);
     });
   };
 
@@ -140,7 +153,6 @@ export default function ForumsPage() {
           </Dialog>
         </div>
 
-        {/* Filter Bar */}
         <div className="flex gap-2 bg-[#1f2937]/50 p-2 rounded-2xl border border-[#374151]/50">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
@@ -200,9 +212,6 @@ export default function ForumsPage() {
                       <span className="text-[10px] font-black text-gray-500">0</span>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500">
-                    <Share2 className="h-4 w-4" />
-                  </Button>
                 </div>
               </CardContent>
             </Card>
