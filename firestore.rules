@@ -13,20 +13,14 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isDataOwner() {
-      return isSignedIn() && request.auth.uid == resource.data.userId;
-    }
-
-    function isRequestOwner() {
-      return isSignedIn() && request.auth.uid == request.resource.data.userId;
-    }
-
     // --- Collection Rules ---
 
     // User Profiles
     match /users/{userId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isOwner(userId);
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create, update: if isOwner(userId);
+      allow delete: if false;
     }
 
     // Forum Posts
@@ -42,59 +36,71 @@ service cloud.firestore {
 
     // Emotional Episodes
     match /episodes/{episodeId} {
-      allow read, list, update, delete: if isDataOwner();
-      allow create: if isRequestOwner();
+      allow read, list: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        resource.data.isAnonymized == true
+      );
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Health Metrics
     match /health-metrics/{metricId} {
-      allow read, list, update, delete: if isDataOwner();
-      allow create: if isRequestOwner();
+      allow read, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Medications
     match /medications/{medId} {
-      allow read, list, update, delete: if isDataOwner();
-      allow create: if isRequestOwner();
+      allow read, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Gratitude / Wins
     match /gratitude/{winId} {
-      allow read, list, update, delete: if isDataOwner();
-      allow create: if isRequestOwner();
+      allow read, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Goals
     match /goals/{goalId} {
-      allow read, list: if isDataOwner() || (isSignedIn() && resource.data.shared == true);
-      allow create: if isRequestOwner();
-      allow update, delete: if isDataOwner();
+      allow read, list: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        resource.data.shared == true
+      );
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Notifications
     match /notifications/{notifId} {
-      allow read, list, update, delete: if isDataOwner();
-      allow create: if isRequestOwner();
+      allow read, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Lists & Collections
     match /lists/{listId} {
-      allow read, list, update, delete: if isDataOwner();
-      allow create: if isRequestOwner();
+      allow read, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Partner Invites
     match /invites/{inviteId} {
-      allow read, list: if isSignedIn() && (
-        request.auth.uid == resource.data.senderId || 
-        request.auth.token.email == resource.data.receiverEmail
-      );
       allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
-      allow update: if isSignedIn() && (
-        request.auth.uid == resource.data.senderId || 
-        request.auth.token.email == resource.data.receiverEmail
+      allow read, list: if isSignedIn() && (
+        resource.data.senderId == request.auth.uid || 
+        (request.auth.token.email != null && resource.data.receiverEmail == request.auth.token.email)
       );
-      allow delete: if isSignedIn() && request.auth.uid == resource.data.senderId;
+      allow update: if isSignedIn() && (
+        resource.data.senderId == request.auth.uid || 
+        (request.auth.token.email != null && resource.data.receiverEmail == request.auth.token.email)
+      );
+      allow delete: if isSignedIn() && resource.data.senderId == request.auth.uid;
     }
 
     // Couples & Shared Data
