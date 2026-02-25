@@ -1,9 +1,10 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileHeader } from "@/components/mobile-header";
-import { Sparkles, AlertCircle, Zap, ShieldAlert, History, Wallet, TrendingDown, TrendingUp, Heart, BrainCircuit } from "lucide-react";
+import { Sparkles, AlertCircle, Zap, ShieldAlert, History, Wallet, TrendingDown, TrendingUp, Heart, BrainCircuit, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -13,13 +14,20 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebas
 import { collection, query, where, orderBy, limit } from "firebase/firestore";
 
 export default function Dashboard() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
 
   const [signal, setSignal] = useState("green");
   const [cooldowns, setCooldowns] = useState<{ [key: string]: number }>({});
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, isUserLoading, router]);
 
   const episodesQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
@@ -32,17 +40,6 @@ export default function Dashboard() {
   }, [db, user]);
 
   const { data: episodes, loading: loadingEpisodes } = useCollection(episodesQuery);
-
-  const transactionsQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    return query(
-      collection(db, "transactions"),
-      where("userId", "==", user.uid),
-      limit(100)
-    );
-  }, [db, user]);
-
-  const { data: transactions, loading: loadingTransactions } = useCollection(transactionsQuery);
 
   const winsQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
@@ -62,6 +59,16 @@ export default function Dashboard() {
       setCooldowns(JSON.parse(saved));
     }
   }, []);
+
+  if (isUserLoading) {
+    return (
+      <div className="flex flex-col min-h-screen bg-[#0f1117] items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) return null; // Redirecting in useEffect
 
   const signals = [
     { id: "green", label: "Feeling Stable", color: "bg-[#14b8a6]" },
@@ -130,20 +137,7 @@ export default function Dashboard() {
     ? (episodes.reduce((acc, ep) => acc + (ep.intensity || 0), 0) / episodes.length).toFixed(1)
     : "0.0";
 
-  const totalExpense = transactions
-    ?.filter((t: any) => t.type === 'expense')
-    .reduce((sum: number, t: any) => sum + (t.amount || 0), 0) || 0;
-
-  const totalIncome = transactions
-    ?.filter((t: any) => t.type === 'income')
-    .reduce((sum: number, t: any) => sum + (t.amount || 0), 0) || 0;
-
-  const isOverBudget = totalExpense > totalIncome;
-  const budgetStatus = isOverBudget ? "Over Budget" : "Under Budget";
-  const budgetColor = isOverBudget ? "text-[#ef4444]" : "text-[#14b8a6]";
-
   const latestWin = recentWins?.[0];
-
   const latestAiInsight = episodes?.find(e => e.aiInsights)?.aiInsights;
 
   return (
@@ -151,9 +145,11 @@ export default function Dashboard() {
       <MobileHeader />
 
       <main className="flex-1 px-4 pt-20 pb-32 space-y-6">
-        <div className="pt-4">
-          <h2 className="text-3xl font-bold text-white mb-1 tracking-tight">Good morning, {user?.displayName || "Alex"}</h2>
-          <p className="text-gray-500 text-sm font-medium">How's your signal today?</p>
+        <div className="pt-4 text-left">
+          <h2 className="text-3xl font-black text-white mb-1 tracking-tighter uppercase leading-none">
+            Welcome, {user?.displayName || (user?.isAnonymous ? "Guest" : user?.email?.split('@')[0])}
+          </h2>
+          <p className="text-gray-500 text-sm font-black uppercase tracking-widest mt-2">Emotional Status</p>
         </div>
 
         <div className="space-y-4">
@@ -201,7 +197,6 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* AI Insight Card */}
         {latestAiInsight && (
           <Card 
             className="bg-primary/5 border-primary/30 rounded-[2rem] p-6 shadow-xl cursor-pointer active:scale-[0.98] transition-transform"
@@ -265,33 +260,6 @@ export default function Dashboard() {
             ) : (
               <p className="text-gray-500 text-sm italic">No wins logged recently. Share some love!</p>
             )}
-          </CardContent>
-        </Card>
-
-        <Card className="bg-[#1f2937] border-[#374151] rounded-[2rem] p-6 shadow-xl">
-          <CardContent className="p-0 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className={cn(
-                "p-3 rounded-2xl bg-[#111827] border",
-                isOverBudget ? "border-[#ef4444]/30" : "border-[#14b8a6]/30"
-              )}>
-                {isOverBudget ? (
-                  <TrendingDown className="h-6 w-6 text-[#ef4444]" />
-                ) : (
-                  <TrendingUp className="h-6 w-6 text-[#14b8a6]" />
-                )}
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Budget Health</p>
-                <h3 className={cn("text-xl font-black uppercase tracking-tight", budgetColor)}>
-                  {loadingTransactions ? "Analyzing..." : budgetStatus}
-                </h3>
-              </div>
-            </div>
-            <div className="text-right">
-              <Wallet className="h-5 w-5 text-gray-700 ml-auto mb-1" />
-              <p className="text-[10px] text-gray-600 font-bold uppercase tracking-tighter">Live Sync</p>
-            </div>
           </CardContent>
         </Card>
       </main>

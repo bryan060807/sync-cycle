@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileHeader } from "@/components/mobile-header";
 import { 
@@ -11,8 +11,7 @@ import {
   Heart, 
   Search, 
   Loader2, 
-  Filter,
-  AlertCircle
+  Filter
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,25 +20,31 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { useUser, useFirestore, useCollection, useMemoFirebase, useAuth } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, updateDoc, doc, increment } from "firebase/firestore";
-import { signInAnonymously } from "firebase/auth";
 import { format } from "date-fns";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 export default function ForumsPage() {
   const { user, isUserLoading } = useUser();
-  const auth = useAuth();
   const db = useFirestore();
   const { toast } = useToast();
+  const router = useRouter();
   
   const [isPosting, setIsPosting] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
   const [category, setCategory] = useState("General");
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, isUserLoading, router]);
 
   const postsQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
@@ -58,7 +63,7 @@ export default function ForumsPage() {
 
     const data = {
       userId: user.uid,
-      userDisplayName: user.displayName || "Anonymous",
+      userDisplayName: user.displayName || (user.isAnonymous ? "Guest" : user.email?.split('@')[0]),
       userPhotoUrl: user.photoURL || "",
       title: newTitle.trim(),
       content: newContent.trim(),
@@ -84,11 +89,6 @@ export default function ForumsPage() {
           requestResourceData: data,
         });
         errorEmitter.emit("permission-error", permissionError);
-        toast({
-          variant: "destructive",
-          title: "Could not post",
-          description: "There was an error saving your post. Please try again."
-        });
       })
       .finally(() => {
         setIsSaving(false);
@@ -109,10 +109,6 @@ export default function ForumsPage() {
     });
   };
 
-  const handleSignIn = () => {
-    signInAnonymously(auth);
-  };
-
   if (isUserLoading) {
     return (
       <div className="flex flex-col min-h-screen bg-[#0f1117] items-center justify-center">
@@ -121,34 +117,17 @@ export default function ForumsPage() {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="flex flex-col min-h-screen bg-[#0f1117]">
-        <MobileHeader />
-        <main className="flex-1 px-4 pt-20 flex flex-col items-center justify-center text-center space-y-4">
-          <AlertCircle className="h-12 w-12 text-gray-500" />
-          <h2 className="text-xl font-bold text-white uppercase tracking-tight">Login Required</h2>
-          <p className="text-gray-500 text-sm max-w-xs">
-            You need to be signed in to view and participate in the community forums.
-          </p>
-          <Button onClick={handleSignIn} className="btn-gradient w-full max-w-xs h-12 rounded-xl">
-            Enter Anonymously
-          </Button>
-        </main>
-        <MobileNav activeTab="home" />
-      </div>
-    );
-  }
+  if (!user) return null;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0f1117]">
       <MobileHeader />
 
       <main className="flex-1 px-4 pt-20 pb-32 space-y-6 text-white text-body">
-        <div className="pt-4 flex justify-between items-center">
+        <div className="pt-4 flex justify-between items-center text-left">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight uppercase tracking-widest">Community</h2>
-            <p className="text-gray-500 text-sm mt-1">Connect and share with others.</p>
+            <h2 className="text-2xl font-black tracking-tighter uppercase tracking-widest">Community</h2>
+            <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">Global Discussion</p>
           </div>
           <Dialog open={isPosting} onOpenChange={setIsPosting}>
             <DialogTrigger asChild>
@@ -224,7 +203,7 @@ export default function ForumsPage() {
                     <AvatarImage src={post.userPhotoUrl || `https://picsum.photos/seed/${post.userId}/100`} />
                     <AvatarFallback>{post.userDisplayName?.charAt(0) || "U"}</AvatarFallback>
                   </Avatar>
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 text-left">
                     <p className="text-xs font-black text-white truncate uppercase tracking-tight">{post.userDisplayName}</p>
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] text-gray-500 font-bold">
@@ -236,10 +215,10 @@ export default function ForumsPage() {
                   </div>
                 </div>
 
-                <h3 className="text-lg font-black text-white leading-tight mb-2 uppercase tracking-tight line-clamp-2">
+                <h3 className="text-lg font-black text-white leading-tight mb-2 uppercase tracking-tight line-clamp-2 text-left">
                   {post.title}
                 </h3>
-                <p className="text-sm text-gray-400 leading-relaxed mb-6 line-clamp-3 italic">
+                <p className="text-sm text-gray-400 leading-relaxed mb-6 line-clamp-3 italic text-left">
                   "{post.content}"
                 </p>
 
