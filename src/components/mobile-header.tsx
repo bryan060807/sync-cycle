@@ -1,14 +1,20 @@
+
 "use client";
 
 import React from "react";
-import { Menu, Heart, Pill } from "lucide-react";
+import { Menu, Heart, Pill, Bell, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, LayoutGrid, User, Activity, Shield, MessageSquare, Star, Calendar, Folder, Settings, HeartPulse } from "lucide-react";
+import { LogOut, LayoutGrid, User, Activity, Shield, MessageSquare, Star, Calendar, Folder, Settings, HeartPulse, Users } from "lucide-react";
 import Link from "next/link";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, query, where, orderBy, limit } from "firebase/firestore";
 
 export function MobileHeader() {
+  const { user } = useUser();
+  const db = useFirestore();
+
   const menuItems = [
     { icon: <LayoutGrid />, label: "Dashboard", href: "/" },
     { icon: <User />, label: "Profile", href: "/settings" },
@@ -16,11 +22,25 @@ export function MobileHeader() {
     { icon: <HeartPulse />, label: "Health", href: "/health" },
     { icon: <Pill />, label: "Medications", href: "/meds" },
     { icon: <Shield />, label: "Crisis Plan", href: "/crisis" },
+    { icon: <Users />, label: "Community Forums", href: "/forums" },
     { icon: <MessageSquare />, label: "Gratitude", href: "/gratitude" },
     { icon: <Star />, label: "Goals", href: "/goals" },
     { icon: <Calendar />, label: "Schedule", href: "/retro" },
     { icon: <Folder />, label: "Collections", href: "/lists" },
   ];
+
+  const unreadQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return query(
+      collection(db, "notifications"),
+      where("userId", "==", user.uid),
+      where("read", "==", false),
+      limit(1)
+    );
+  }, [db, user]);
+
+  const { data: unreadNotifications } = useCollection(unreadQuery);
+  const hasUnread = unreadNotifications && unreadNotifications.length > 0;
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 bg-[#0f1117]/80 backdrop-blur-md border-b border-[#374151] h-16 flex items-center px-4 safe-top">
@@ -54,21 +74,13 @@ export function MobileHeader() {
             <div className="p-6 border-t border-[#374151] bg-[#111827]">
               <div className="flex items-center gap-3 mb-6">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src="https://picsum.photos/seed/user/100" />
-                  <AvatarFallback>AJ</AvatarFallback>
+                  <AvatarImage src={user?.photoURL || "https://picsum.photos/seed/user/100"} />
+                  <AvatarFallback>{user?.displayName?.charAt(0) || "U"}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <p className="text-sm font-bold text-white">Alex Johnson</p>
-                  <p className="text-[10px] text-gray-500">alex.j@example.com</p>
+                  <p className="text-sm font-bold text-white">{user?.displayName || "User"}</p>
+                  <p className="text-[10px] text-gray-500">{user?.email}</p>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Button variant="ghost" className="w-full justify-start text-gray-400 p-0 h-auto hover:text-white">
-                  <Settings className="h-4 w-4 mr-2" /> Settings
-                </Button>
-                <Button variant="ghost" className="w-full justify-start text-destructive p-0 h-auto hover:text-destructive">
-                  <LogOut className="h-4 w-4 mr-2" /> Sign Out
-                </Button>
               </div>
             </div>
           </div>
@@ -79,7 +91,14 @@ export function MobileHeader() {
         <h1 className="text-lg font-bold tracking-tight text-white">SyncCycle</h1>
       </div>
 
-      <div className="w-10" />
+      <Link href="/notifications">
+        <Button variant="ghost" size="icon" className="text-white relative">
+          <Bell className="h-6 w-6" />
+          {hasUnread && (
+            <span className="absolute top-2 right-2 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-[#0f1117]" />
+          )}
+        </Button>
+      </Link>
     </header>
   );
 }

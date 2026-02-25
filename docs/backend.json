@@ -11,9 +11,10 @@
         "notes": { "type": "string", "description": "Additional context or thoughts." },
         "copingSkillId": { "type": "string", "description": "ID of the coping skill used." },
         "userId": { "type": "string", "description": "UID of the user who logged the episode." },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "isAnonymized": { "type": "boolean" }
       },
-      "required": ["intensity", "trigger", "userId", "createdAt"]
+      "required": ["intensity", "userId", "createdAt"]
     },
     "Goal": {
       "title": "Goal",
@@ -88,14 +89,44 @@
       "description": "Prescription and supplement tracking.",
       "type": "object",
       "properties": {
-        "name": { "type": "string", "description": "Name of the medication." },
-        "dosage": { "type": "string", "description": "Dosage amount (e.g., 20mg)." },
-        "schedule": { "type": "string", "description": "When to take it (e.g., Morning)." },
-        "frequency": { "type": "string", "description": "How often (e.g., Daily)." },
+        "name": { "type": "string" },
+        "dosage": { "type": "string" },
+        "schedule": { "type": "string" },
+        "frequency": { "type": "string" },
         "userId": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["name", "dosage", "userId", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "User alert or update.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "read": { "type": "boolean" },
+        "type": { "type": "string", "enum": ["alert", "system", "social"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "createdAt"]
+    },
+    "ForumPost": {
+      "title": "ForumPost",
+      "description": "Community discussion post.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userDisplayName": { "type": "string" },
+        "userPhotoUrl": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "category": { "type": "string" },
+        "likes": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "content", "createdAt"]
     }
   },
   "auth": {
@@ -129,6 +160,14 @@
     "/medications/{medicationId}": {
       "schema": "#/entities/Medication",
       "description": "User medications and supplements."
+    },
+    "/notifications/{notificationId}": {
+      "schema": "#/entities/Notification",
+      "description": "User notifications."
+    },
+    "/forum-posts/{postId}": {
+      "schema": "#/entities/ForumPost",
+      "description": "Community forum posts."
     }
   }
 }
