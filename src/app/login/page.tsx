@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Heart, 
   Mail, 
@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/firebase";
+import { useAuth, useUser } from "@/firebase";
 import { 
   initiateAnonymousSignIn, 
   initiateEmailSignIn, 
@@ -31,10 +31,18 @@ export default function LoginPage() {
   const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const { user, isUserLoading } = useUser();
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Automatically redirect when the user state becomes active
+  useEffect(() => {
+    if (user && !isUserLoading) {
+      router.push("/");
+    }
+  }, [user, isUserLoading, router]);
 
   const handleAuthAction = (action: () => void, successMessage: string) => {
     setIsLoading(true);
@@ -43,7 +51,7 @@ export default function LoginPage() {
       // We don't await because of the non-blocking pattern guidelines
       // The onAuthStateChanged listener in FirebaseProvider handles the redirect
       toast({
-        title: "Action Initiated",
+        title: "Auth Initiated",
         description: successMessage,
       });
     } catch (error: any) {
@@ -52,9 +60,10 @@ export default function LoginPage() {
         title: "Authentication Error",
         description: error.message || "Something went wrong.",
       });
+      setIsLoading(false);
     } finally {
       // Small delay to prevent flickering if redirect happens fast
-      setTimeout(() => setIsLoading(false), 1000);
+      setTimeout(() => setIsLoading(false), 2000);
     }
   };
 
@@ -63,7 +72,7 @@ export default function LoginPage() {
     if (!email || !password) return;
     handleAuthAction(
       () => initiateEmailSignIn(auth, email, password),
-      "Logging you in..."
+      "Checking credentials..."
     );
   };
 
@@ -72,7 +81,7 @@ export default function LoginPage() {
     if (!email || !password) return;
     handleAuthAction(
       () => initiateEmailSignUp(auth, email, password),
-      "Creating your account..."
+      "Creating your profile..."
     );
   };
 
@@ -123,6 +132,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="bg-[#111827] border-[#374151] h-14 pl-12 rounded-2xl text-white placeholder:text-gray-700"
+                    autoComplete="email"
                   />
                 </div>
                 <div className="relative">
@@ -133,6 +143,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="bg-[#111827] border-[#374151] h-14 pl-12 rounded-2xl text-white placeholder:text-gray-700"
+                    autoComplete="current-password"
                   />
                 </div>
                 <Button 
@@ -159,6 +170,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="bg-[#111827] border-[#374151] h-14 pl-12 rounded-2xl text-white placeholder:text-gray-700"
+                    autoComplete="email"
                   />
                 </div>
                 <div className="relative">
@@ -169,6 +181,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="bg-[#111827] border-[#374151] h-14 pl-12 rounded-2xl text-white placeholder:text-gray-700"
+                    autoComplete="new-password"
                   />
                 </div>
                 <Button 
