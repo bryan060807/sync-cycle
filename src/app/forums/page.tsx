@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -35,7 +36,7 @@ export default function ForumsPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   const postsQuery = useMemoFirebase(() => {
-    if (!db || !user) return null; // Wait for user to query for better UX and permission alignment
+    if (!db || !user) return null;
     return query(
       collection(db, "forum-posts"),
       orderBy("createdAt", "desc"),
@@ -102,7 +103,7 @@ export default function ForumsPage() {
       <main className="flex-1 px-4 pt-20 pb-32 space-y-6 text-white">
         <div className="pt-4 flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Community</h2>
+            <h2 className="text-2xl font-bold tracking-tight uppercase tracking-widest">Community</h2>
             <p className="text-gray-500 text-sm mt-1">Connect and share with others.</p>
           </div>
           <Dialog open={isPosting} onOpenChange={setIsPosting}>
@@ -111,7 +112,7 @@ export default function ForumsPage() {
                 <Plus className="h-6 w-6" />
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-[#1f2937] border-[#374151] text-white rounded-t-3xl sm:rounded-3xl">
+            <DialogContent className="bg-[#1f2937] border-[#374151] text-white rounded-[2rem]">
               <DialogHeader>
                 <DialogTitle className="text-white uppercase font-black tracking-tight">New Discussion</DialogTitle>
               </DialogHeader>
@@ -121,7 +122,7 @@ export default function ForumsPage() {
                     <Badge 
                       key={cat}
                       onClick={() => setCategory(cat)}
-                      className={category === cat ? "bg-primary text-white" : "bg-[#111827] text-gray-500 cursor-pointer"}
+                      className={category === cat ? "bg-primary text-white cursor-pointer" : "bg-[#111827] text-gray-500 cursor-pointer"}
                     >
                       {cat}
                     </Badge>

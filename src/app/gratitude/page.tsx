@@ -11,6 +11,8 @@ import { Heart, Send, History, Loader2 } from "lucide-react";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp, query, where, orderBy, limit } from "firebase/firestore";
 import { format } from "date-fns";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 export default function Gratitude() {
   const { user } = useUser();
@@ -30,17 +32,31 @@ export default function Gratitude() {
 
   const { data: archives, loading } = useCollection(gratitudeQuery);
 
-  const handleSendWin = async () => {
+  const handleSendWin = () => {
     if (!text.trim() || !db || !user) return;
 
     setIsSending(true);
-    addDoc(collection(db, "gratitude"), {
+    const data = {
       text: text.trim(),
       userId: user.uid,
       createdAt: serverTimestamp(),
-    });
-    setText("");
-    setIsSending(false);
+    };
+
+    addDoc(collection(db, "gratitude"), data)
+      .then(() => {
+        setText("");
+      })
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: "gratitude",
+          operation: "create",
+          requestResourceData: data,
+        });
+        errorEmitter.emit("permission-error", permissionError);
+      })
+      .finally(() => {
+        setIsSending(false);
+      });
   };
 
   return (
@@ -49,7 +65,7 @@ export default function Gratitude() {
 
       <main className="flex-1 px-4 pt-20 pb-24 space-y-6">
         <div className="pt-4">
-          <h2 className="text-2xl font-bold text-white">Wins & Gratitude</h2>
+          <h2 className="text-2xl font-bold text-white uppercase tracking-tight">Wins & Gratitude</h2>
           <p className="text-gray-500 text-sm mt-1">What went well today?</p>
         </div>
 
@@ -64,7 +80,10 @@ export default function Gratitude() {
               placeholder="Start typing..." 
               value={text}
               onChange={(e) => setText(e.target.value)}
-              className="bg-[#111827] border-[#374151] rounded-2xl h-14 pl-4 pr-14 text-white"
+              className="bg-[#111827] border-[#374151] rounded-2xl h-14 pl-4 pr-14 text-white placeholder:text-gray-700"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSendWin();
+              }}
             />
             <Button 
               size="icon" 
@@ -82,7 +101,7 @@ export default function Gratitude() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <History className="h-4 w-4 text-gray-500" />
-              <h3 className="font-bold text-gray-300">Archived Wins</h3>
+              <h3 className="font-bold text-gray-300 uppercase tracking-widest text-[10px]">Archived Wins</h3>
             </div>
             <span className="text-[10px] bg-[#1f2937] px-3 py-1 rounded-full border border-[#374151] text-gray-500 font-bold uppercase tracking-widest">
               {archives?.length || 0} Total
@@ -101,7 +120,7 @@ export default function Gratitude() {
                     <Heart className="h-4 w-4 text-yellow-500" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm text-white font-medium">{win.text}</p>
+                    <p className="text-sm text-white font-medium italic">"{win.text}"</p>
                     <p className="text-[10px] text-gray-600 mt-1 uppercase font-bold">
                       {win.createdAt?.toDate ? format(win.createdAt.toDate(), "MMM dd") : "Just now"}
                     </p>
@@ -110,7 +129,7 @@ export default function Gratitude() {
               </Card>
             ))}
             {!loading && archives?.length === 0 && (
-              <p className="text-center text-gray-500 text-xs py-8">No wins archived yet. Start the cycle of praise!</p>
+              <p className="text-center text-gray-500 text-xs py-12 bg-[#111827] rounded-3xl border border-dashed border-[#374151]">No wins archived yet. Start the cycle of praise!</p>
             )}
           </div>
         </div>

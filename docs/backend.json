@@ -52,6 +52,21 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["senderId", "text", "createdAt"]
+    },
+    "Goal": {
+      "title": "Goal",
+      "type": "object",
+      "description": "An objective or habit a user is tracking.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "progress": { "type": "number" },
+        "shared": { "type": "boolean" },
+        "category": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "progress", "createdAt"]
     }
   },
   "auth": {
@@ -89,6 +104,14 @@
           "entityName": "ChatMessage",
           "schema": { "$ref": "#/backend/entities/ChatMessage" },
           "description": "Real-time messages for a couple."
+        }
+      },
+      {
+        "path": "/goals/{goalId}",
+        "definition": {
+          "entityName": "Goal",
+          "schema": { "$ref": "#/backend/entities/Goal" },
+          "description": "User goals and habits."
         }
       }
     ]
