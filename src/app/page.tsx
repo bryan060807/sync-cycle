@@ -1,9 +1,10 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileHeader } from "@/components/mobile-header";
-import { Sparkles, AlertCircle, Zap, ShieldAlert, History, Wallet, TrendingDown, TrendingUp } from "lucide-react";
+import { Sparkles, AlertCircle, Zap, ShieldAlert, History, Wallet, TrendingDown, TrendingUp, Heart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,19 @@ export default function Dashboard() {
   }, [db, user]);
 
   const { data: transactions, loading: loadingTransactions } = useCollection(transactionsQuery);
+
+  // Fetch latest win for Recent Wins
+  const winsQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return query(
+      collection(db, "gratitude"),
+      where("userId", "==", user.uid),
+      orderBy("createdAt", "desc"),
+      limit(1)
+    );
+  }, [db, user]);
+
+  const { data: recentWins, loading: loadingWins } = useCollection(winsQuery);
 
   useEffect(() => {
     const saved = localStorage.getItem("crisis_cooldowns");
@@ -134,6 +148,8 @@ export default function Dashboard() {
   const budgetStatus = isOverBudget ? "Over Budget" : "Under Budget";
   const budgetColor = isOverBudget ? "text-[#ef4444]" : "text-[#14b8a6]";
 
+  const latestWin = recentWins?.[0];
+
   return (
     <div className="flex flex-col min-h-screen bg-[#0f1117]">
       <MobileHeader />
@@ -176,7 +192,7 @@ export default function Dashboard() {
         {/* Crisis Buttons */}
         <div className="grid grid-cols-3 gap-3">
           {alertPills.map((pill) => (
-            <Button
+            <button
               key={pill.id}
               onClick={() => handleCrisisAlert(pill.id, pill.label)}
               className={cn(
@@ -187,11 +203,11 @@ export default function Dashboard() {
             >
               {pill.icon}
               <span className="text-[9px] uppercase tracking-tighter leading-tight">{pill.label}</span>
-            </Button>
+            </button>
           ))}
         </div>
 
-        {/* Emotional Baseline Score Card */}
+        {/* Emotional Baseline Card */}
         <Card className="bg-[#1f2937] border-[#374151] rounded-[2.5rem] p-8 overflow-hidden relative shadow-2xl">
           <div className="absolute -top-6 -right-6 p-8 opacity-5">
             <Sparkles className="h-48 w-48 text-white" />
@@ -212,6 +228,33 @@ export default function Dashboard() {
               </div>
               <span className="text-lg font-black text-[#a855f7]">{episodes?.length || 0}</span>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Wins Card */}
+        <Card 
+          className="bg-[#1f2937] border-[#374151] rounded-[2rem] p-6 shadow-xl active:scale-[0.98] transition-transform cursor-pointer"
+          onClick={() => router.push("/gratitude")}
+        >
+          <CardContent className="p-0">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-yellow-500/10 rounded-xl">
+                  <Heart className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                </div>
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Recent Wins</p>
+              </div>
+              <TrendingUp className="h-4 w-4 text-gray-700" />
+            </div>
+            {loadingWins ? (
+              <p className="text-gray-600 text-sm animate-pulse">Fetching latest wins...</p>
+            ) : latestWin ? (
+              <p className="text-white text-sm font-medium leading-relaxed italic line-clamp-2">
+                "{latestWin.text}"
+              </p>
+            ) : (
+              <p className="text-gray-500 text-sm italic">No wins logged recently. Share some love!</p>
+            )}
           </CardContent>
         </Card>
 

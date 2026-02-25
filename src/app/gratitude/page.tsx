@@ -1,18 +1,47 @@
+
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileHeader } from "@/components/mobile-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Heart, Send, History } from "lucide-react";
+import { Heart, Send, History, Loader2 } from "lucide-react";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, addDoc, serverTimestamp, query, where, orderBy, limit } from "firebase/firestore";
+import { format } from "date-fns";
 
 export default function Gratitude() {
-  const archives = [
-    { text: "Partner made me coffee without asking.", date: "Today" },
-    { text: "Successfully navigated a difficult trigger.", date: "Yesterday" },
-  ];
+  const { user } = useUser();
+  const db = useFirestore();
+  const [text, setText] = useState("");
+  const [isSending, setIsSending] = useState(false);
+
+  const gratitudeQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return query(
+      collection(db, "gratitude"),
+      where("userId", "==", user.uid),
+      orderBy("createdAt", "desc"),
+      limit(20)
+    );
+  }, [db, user]);
+
+  const { data: archives, loading } = useCollection(gratitudeQuery);
+
+  const handleSendWin = async () => {
+    if (!text.trim() || !db || !user) return;
+
+    setIsSending(true);
+    addDoc(collection(db, "gratitude"), {
+      text: text.trim(),
+      userId: user.uid,
+      createdAt: serverTimestamp(),
+    });
+    setText("");
+    setIsSending(false);
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0f1117]">
@@ -33,10 +62,17 @@ export default function Gratitude() {
           <div className="relative">
             <Input 
               placeholder="Start typing..." 
-              className="bg-[#111827] border-[#374151] rounded-2xl h-14 pl-4 pr-14"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              className="bg-[#111827] border-[#374151] rounded-2xl h-14 pl-4 pr-14 text-white"
             />
-            <Button size="icon" className="absolute right-2 top-2 h-10 w-10 bg-yellow-500 hover:bg-yellow-600 rounded-xl">
-              <Send className="h-4 w-4 text-white" />
+            <Button 
+              size="icon" 
+              onClick={handleSendWin}
+              disabled={isSending || !text.trim()}
+              className="absolute right-2 top-2 h-10 w-10 bg-yellow-500 hover:bg-yellow-600 rounded-xl"
+            >
+              {isSending ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Send className="h-4 w-4 text-white" />}
             </Button>
           </div>
         </div>
@@ -49,24 +85,33 @@ export default function Gratitude() {
               <h3 className="font-bold text-gray-300">Archived Wins</h3>
             </div>
             <span className="text-[10px] bg-[#1f2937] px-3 py-1 rounded-full border border-[#374151] text-gray-500 font-bold uppercase tracking-widest">
-              12 Total
+              {archives?.length || 0} Total
             </span>
           </div>
 
           <div className="space-y-3">
-            {archives.map((win, i) => (
-              <Card key={i} className="bg-[#1f2937] border-[#374151] rounded-2xl p-4">
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+              </div>
+            ) : archives?.map((win: any) => (
+              <Card key={win.id} className="bg-[#1f2937] border-[#374151] rounded-2xl p-4">
                 <div className="flex items-start gap-4">
                   <div className="p-2 bg-yellow-500/10 rounded-xl">
                     <Heart className="h-4 w-4 text-yellow-500" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-white font-medium">{win.text}</p>
-                    <p className="text-[10px] text-gray-600 mt-1 uppercase font-bold">{win.date}</p>
+                    <p className="text-[10px] text-gray-600 mt-1 uppercase font-bold">
+                      {win.createdAt?.toDate ? format(win.createdAt.toDate(), "MMM dd") : "Just now"}
+                    </p>
                   </div>
                 </div>
               </Card>
             ))}
+            {!loading && archives?.length === 0 && (
+              <p className="text-center text-gray-500 text-xs py-8">No wins archived yet. Start the cycle of praise!</p>
+            )}
           </div>
         </div>
       </main>

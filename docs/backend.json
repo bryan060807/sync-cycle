@@ -55,6 +55,17 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["amount", "type", "userId", "createdAt"]
+    },
+    "Gratitude": {
+      "title": "Gratitude",
+      "description": "A win or gratitude note for a partner.",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["text", "userId", "createdAt"]
     }
   },
   "auth": {
@@ -76,6 +87,10 @@
     "/transactions/{transactionId}": {
       "schema": "#/entities/Transaction",
       "description": "Financial records."
+    },
+    "/gratitude/{gratitudeId}": {
+      "schema": "#/entities/Gratitude",
+      "description": "Wins and gratitude notes."
     }
   }
 }
