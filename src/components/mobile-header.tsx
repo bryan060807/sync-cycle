@@ -2,7 +2,7 @@
 "use client";
 
 import React from "react";
-import { Menu, Heart, Pill, Bell } from "lucide-react";
+import { Menu, Heart, Pill, Bell, MessageSquareHeart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,6 +18,7 @@ export function MobileHeader() {
   const menuItems = [
     { icon: <LayoutGrid />, label: "Dashboard", href: "/" },
     { icon: <User />, label: "Profile", href: "/settings" },
+    { icon: <MessageSquareHeart />, label: "Partner", href: "/partner" },
     { icon: <Activity />, label: "Emotional Check-in", href: "/wellness" },
     { icon: <HeartPulse />, label: "Health", href: "/health" },
     { icon: <Pill />, label: "Medications", href: "/meds" },

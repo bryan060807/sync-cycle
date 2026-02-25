@@ -1,155 +1,61 @@
+
 {
   "entities": {
     "UserProfile": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "UserProfile",
       "type": "object",
-      "description": "Represents a user's profile information within the CycleSync mobile application. Authentication details are handled by an external system.",
+      "description": "Represents a user's profile information.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the UserProfile entity."
-        },
-        "email": {
-          "type": "string",
-          "description": "The user's email address, used for communication and identification.",
-          "format": "email"
-        },
-        "username": {
-          "type": "string",
-          "description": "A user-friendly display name or username."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp indicating when the user profile was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp indicating the last time the user profile was updated.",
-          "format": "date-time"
-        }
+        "id": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "username": { "type": "string" },
+        "partnerId": { "type": "string", "description": "UID of the connected partner." },
+        "coupleId": { "type": "string", "description": "ID of the shared couple document." },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "email",
-        "createdAt",
-        "updatedAt"
-      ]
+      "required": ["id", "email", "createdAt", "updatedAt"]
     },
-    "Workspace": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Workspace",
+    "PartnerInvite": {
+      "title": "PartnerInvite",
       "type": "object",
-      "description": "Represents an individual 'cycle' or workspace created and managed by a user, containing tasks and items.",
+      "description": "An invitation sent from one user to another to couple accounts.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Workspace entity."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the workspace, chosen by the user."
-        },
-        "description": {
-          "type": "string",
-          "description": "An optional detailed description for the workspace."
-        },
-        "ownerId": {
-          "type": "string",
-          "description": "Reference to the UserProfile that owns this workspace. (Relationship: UserProfile 1:N Workspace)"
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp indicating when the workspace was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp indicating the last time the workspace was updated.",
-          "format": "date-time"
-        }
+        "id": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderEmail": { "type": "string" },
+        "receiverEmail": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "declined"] },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "name",
-        "ownerId",
-        "createdAt",
-        "updatedAt"
-      ]
+      "required": ["senderId", "senderEmail", "receiverEmail", "status", "createdAt"]
     },
-    "Task": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Task",
+    "Couple": {
+      "title": "Couple",
       "type": "object",
-      "description": "Represents an individual task or item within a specific workspace, including its status, due date, and notes.",
+      "description": "Represents a bond between two users.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Task entity."
-        },
-        "title": {
-          "type": "string",
-          "description": "The title or short description of the task."
-        },
-        "description": {
-          "type": "string",
-          "description": "An optional detailed description or notes for the task."
-        },
-        "dueDate": {
-          "type": "string",
-          "description": "An optional due date for the task.",
-          "format": "date-time"
-        },
-        "status": {
-          "type": "string",
-          "description": "The current status of the task (e.g., 'to-do', 'in-progress', 'completed', 'waiting', 'blocked')."
-        },
-        "priority": {
-          "type": "string",
-          "description": "The priority level of the task (e.g., 'low', 'medium', 'high', 'critical')."
-        },
-        "isCompleted": {
-          "type": "boolean",
-          "description": "A boolean flag indicating whether the task has been marked as complete."
-        },
-        "completedAt": {
-          "type": "string",
-          "description": "Timestamp indicating when the task was marked as completed. Null if not completed.",
-          "format": "date-time"
-        },
-        "workspaceId": {
-          "type": "string",
-          "description": "Reference to the Workspace this task belongs to. (Relationship: Workspace 1:N Task)"
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp indicating when the task was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp indicating the last time the task was updated.",
-          "format": "date-time"
-        }
+        "id": { "type": "string" },
+        "uids": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "title",
-        "status",
-        "priority",
-        "isCompleted",
-        "workspaceId",
-        "createdAt",
-        "updatedAt"
-      ]
+      "required": ["id", "uids", "createdAt"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "type": "object",
+      "description": "A message sent between partners.",
+      "properties": {
+        "id": { "type": "string" },
+        "senderId": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["senderId", "text", "createdAt"]
     }
   },
   "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
+    "providers": ["password", "anonymous"]
   },
   "firestore": {
     "structure": [
@@ -157,57 +63,34 @@
         "path": "/users/{userId}",
         "definition": {
           "entityName": "UserProfile",
-          "schema": {
-            "$ref": "#/backend/entities/UserProfile"
-          },
-          "description": "Stores individual user profiles. Access is restricted to the owner of the profile, where '{userId}' matches 'request.auth.uid'. This path directly represents the user's private data."
+          "schema": { "$ref": "#/backend/entities/UserProfile" },
+          "description": "User profile data."
         }
       },
       {
-        "path": "/users/{userId}/workspaces/{workspaceId}",
+        "path": "/invites/{inviteId}",
         "definition": {
-          "entityName": "Workspace",
-          "schema": {
-            "$ref": "#/backend/entities/Workspace"
-          },
-          "description": "Contains workspaces created and owned by a specific user. Each document includes the 'ownerId' field, which matches '{userId}' from the path, ensuring authorization independence. Access to a workspace and its contents is restricted to its owner.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique ID of the user who owns this workspace. Must match 'request.auth.uid'."
-            },
-            {
-              "name": "workspaceId",
-              "description": "The unique ID of the specific workspace."
-            }
-          ]
+          "entityName": "PartnerInvite",
+          "schema": { "$ref": "#/backend/entities/PartnerInvite" },
+          "description": "Global invites collection for finding invites by receiverEmail."
         }
       },
       {
-        "path": "/users/{userId}/workspaces/{workspaceId}/tasks/{taskId}",
+        "path": "/couples/{coupleId}",
         "definition": {
-          "entityName": "Task",
-          "schema": {
-            "$ref": "#/backend/entities/Task"
-          },
-          "description": "Stores individual tasks associated with a specific workspace. Each document includes denormalized 'ownerId' (matching '{userId}' from the path) and 'workspaceId' (matching '{workspaceId}' from the path) to ensure authorization independence without requiring parent document lookups in security rules. Access is restricted to the owner of the parent workspace.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique ID of the user who owns the parent workspace and, by extension, this task. Must match 'request.auth.uid'."
-            },
-            {
-              "name": "workspaceId",
-              "description": "The unique ID of the parent workspace to which this task belongs."
-            },
-            {
-              "name": "taskId",
-              "description": "The unique ID of the specific task."
-            }
-          ]
+          "entityName": "Couple",
+          "schema": { "$ref": "#/backend/entities/Couple" },
+          "description": "Shared couple data."
+        }
+      },
+      {
+        "path": "/couples/{coupleId}/messages/{messageId}",
+        "definition": {
+          "entityName": "ChatMessage",
+          "schema": { "$ref": "#/backend/entities/ChatMessage" },
+          "description": "Real-time messages for a couple."
         }
       }
-    ],
-    "reasoning": "The Firestore data structure for CycleSync Mobile is designed to be secure, scalable, and debuggable by strictly adhering to the core design principles and strategy mandates. \n\n**Authorization Independence (CRITICAL):** Authorization independence is achieved primarily through structural design and strategic denormalization. User profiles are stored at `/users/{userId}`, where `userId` directly corresponds to `request.auth.uid`, making authorization trivial without any `get()` calls. Workspaces are nested under user profiles at `/users/{userId}/workspaces/{workspaceId}`. Each `Workspace` document includes an `ownerId` field, which explicitly matches the `{userId}` in its path. This denormalization means that security rules for `Workspace` documents only need to check `request.auth.uid == resource.data.ownerId` (or `request.auth.uid == userId` from the path), eliminating the need for a `get()` call to a parent user document.\n\nTasks, in turn, are nested under workspaces at `/users/{userId}/workspaces/{workspaceId}/tasks/{taskId}`. To ensure authorization independence for `Task` documents, each `Task` document will explicitly include both `workspaceId` (matching `{workspaceId}` in its path) AND `ownerId` (denormalized from its parent `Workspace`, matching `{userId}` in the path). This crucial denormalization allows security rules for `Task` documents to directly verify `request.auth.uid == resource.data.ownerId` without performing a `get()` operation on the parent `Workspace` document or any other parent, thereby preserving atomicity for operations like batch writes and transactions.\n\n**QAPs (Rules are not Filters):** The hierarchical path structure inherently supports Query Authorization Patterns (QAPs) by ensuring that `list` operations are always performed within a securely defined scope. For example, a query to `/users/{userId}/workspaces` will naturally only return workspaces owned by the authenticated user (`request.auth.uid`), as `{userId}` in the path is constrained by the user's authentication token. Similarly, `list` operations on `/users/{userId}/workspaces/{workspaceId}/tasks` will only yield tasks belonging to a specific workspace, which is already under the authenticated user's ownership. This structural segregation prevents queries from unintentionally revealing unauthorized data, as the data's location in the database path intrinsically enforces the access policy, making `list` rules simple and efficient (e.g., `allow list: if request.auth.uid == userId;`).\n\n**Structural Segregation & Access Modeling:** All documents within a given collection or subcollection share the same security posture. For example, all `UserProfile` documents at `/users/{userId}` are exclusively owned by that specific user. All `Workspace` documents within `/users/{userId}/workspaces` are owned by the parent user, and all `Task` documents within `/users/{userId}/workspaces/{workspaceId}/tasks` are owned by the parent workspace's owner. This consistent ownership model simplifies security rules significantly. The use of clear, descriptive wildcards like `{userId}`, `{workspaceId}`, and `{taskId}` enhances debuggability and clarity of intent. Furthermore, the `Task` entity uses a single `status` field for explicit state modeling, preventing ambiguity from multiple boolean flags.\n\nIn summary, this structure prioritizes atomicity, rule simplicity, and data integrity by embedding authorization context directly within each document and leveraging the path hierarchy for robust QAPs."
+    ]
   }
 }
