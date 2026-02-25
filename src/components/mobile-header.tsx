@@ -26,7 +26,7 @@ export function MobileHeader() {
     { icon: <Users />, label: "Community Forums", href: "/forums" },
     { icon: <MessageSquare />, label: "Gratitude", href: "/gratitude" },
     { icon: <Star />, label: "Goals", href: "/goals" },
-    { icon: <Calendar />, label: "Schedule", href: "/retro" },
+    { icon: <Calendar />, label: "Weekly Retro", href: "/retro" },
     { icon: <Folder />, label: "Collections", href: "/lists" },
   ];
 
