@@ -36,10 +36,16 @@ service cloud.firestore {
 
     // Emotional Episodes
     match /episodes/{episodeId} {
-      allow read, list: if isSignedIn() && (
+      // Individual get
+      allow get: if isSignedIn() && (
         resource.data.userId == request.auth.uid || 
         resource.data.isAnonymized == true
       );
+      // List/Query: Owner only
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      // List/Query: Anonymized only
+      allow list: if isSignedIn() && resource.data.isAnonymized == true;
+      
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
@@ -67,10 +73,16 @@ service cloud.firestore {
 
     // Goals
     match /goals/{goalId} {
-      allow read, list: if isSignedIn() && (
+      // Get: Owner or Shared
+      allow get: if isSignedIn() && (
         resource.data.userId == request.auth.uid || 
         resource.data.shared == true
       );
+      // List: Owner only
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      // List: Shared only
+      allow list: if isSignedIn() && resource.data.shared == true;
+
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }

@@ -20,8 +20,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { useUser, useFirestore, useCollection } from "@/firebase";
-import { collection, addDoc, serverTimestamp, query, where, orderBy } from "firebase/firestore";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, addDoc, serverTimestamp, query, where, orderBy, limit } from "firebase/firestore";
 import { format } from "date-fns";
 
 export default function BpdTracker() {
@@ -32,12 +32,13 @@ export default function BpdTracker() {
   const [trigger, setTrigger] = useState("");
   const [notes, setNotes] = useState("");
 
-  const episodesQuery = React.useMemo(() => {
+  const episodesQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return query(
       collection(db, "episodes"),
       where("userId", "==", user.uid),
-      orderBy("createdAt", "desc")
+      orderBy("createdAt", "desc"),
+      limit(50)
     );
   }, [db, user]);
 
