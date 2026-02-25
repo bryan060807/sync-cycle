@@ -179,29 +179,16 @@ export default function Dashboard() {
               </span>
               <span className="text-gray-400 text-xl font-medium">/ 10</span>
             </div>
-            <p className="text-gray-400 text-sm mt-5 leading-relaxed font-medium">
-              Average pulse intensity based on your recent check-ins.
-            </p>
+            
+            <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <History className="h-3 w-3 text-muted-foreground" />
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Recent Entries</span>
+              </div>
+              <span className="text-lg font-black text-[#a855f7]">{episodes?.length || 0}</span>
+            </div>
           </CardContent>
         </Card>
-
-        {/* Quick Insights */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="bg-[#1f2937] border-[#374151] rounded-[2rem] p-6 shadow-xl border-l-4 border-l-[#a855f7]">
-            <div className="p-2.5 bg-[#7c3aed]/10 w-fit rounded-2xl mb-4">
-              <History className="h-5 w-5 text-[#a855f7]" />
-            </div>
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Recent Entries</p>
-            <p className="text-2xl font-black text-white">{episodes?.length || 0}</p>
-          </Card>
-          <Card className="bg-[#1f2937] border-[#374151] rounded-[2rem] p-6 shadow-xl border-l-4 border-l-[#14b8a6]">
-            <div className="p-2.5 bg-[#14b8a6]/10 w-fit rounded-2xl mb-4">
-              <Brain className="h-5 w-5 text-[#14b8a6]" />
-            </div>
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Cycle Status</p>
-            <p className="text-2xl font-black text-white">{episodes && episodes.length > 0 ? "Tracking" : "Idle"}</p>
-          </Card>
-        </div>
       </main>
 
       <MobileNav activeTab="home" />
