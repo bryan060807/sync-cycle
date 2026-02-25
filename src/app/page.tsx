@@ -13,83 +13,60 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@
 import { collection, query, where, orderBy, limit, doc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export default function Dashboard() {
-  const { user, loading: isUserLoading } = useUser();
+  const { user } = useUser();
   const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push("/login");
-    }
-  }, [user, isUserLoading, router]);
+  // Use a stable ID for the prototype if not logged in
+  const userId = user?.uid || "guest_user";
+  const displayName = user?.displayName || user?.email?.split('@')[0] || "Guest";
 
   // Fetch user profile for signal state
   const userProfileRef = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    return doc(db, "users", user.uid);
-  }, [db, user]);
+    if (!db) return null;
+    return doc(db, "users", userId);
+  }, [db, userId]);
   const { data: userProfile } = useDoc(userProfileRef);
 
   // Initialize profile if it doesn't exist
   useEffect(() => {
-    if (db && user && !isUserLoading && !userProfile) {
-      const userRef = doc(db, "users", user.uid);
+    if (db && !userProfile) {
+      const userRef = doc(db, "users", userId);
       setDoc(userRef, {
-        id: user.uid,
-        email: user.email,
-        username: user.displayName || user.email?.split('@')[0] || "User",
+        id: userId,
+        username: displayName,
         currentSignal: "green",
         createdAt: new Date().toISOString()
       }, { merge: true });
     }
-  }, [db, user, isUserLoading, userProfile]);
+  }, [db, userId, userProfile, displayName]);
 
   const signal = userProfile?.currentSignal || "green";
 
-  const [cooldowns, setCooldowns] = useState<{ [key: string]: number }>({});
-
   const episodesQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
+    if (!db) return null;
     return query(
       collection(db, "episodes"),
-      where("userId", "==", user.uid),
+      where("userId", "==", userId),
       orderBy("createdAt", "desc"),
-      limit(50)
+      limit(5)
     );
-  }, [db, user]);
+  }, [db, userId]);
 
   const { data: episodes, isLoading: loadingEpisodes } = useCollection(episodesQuery);
 
   const winsQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
+    if (!db) return null;
     return query(
       collection(db, "gratitude"),
-      where("userId", "==", user.uid),
+      where("userId", "==", userId),
       orderBy("createdAt", "desc"),
       limit(1)
     );
-  }, [db, user]);
+  }, [db, userId]);
 
   const { data: recentWins, isLoading: loadingWins } = useCollection(winsQuery);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("crisis_cooldowns");
-    if (saved) {
-      setCooldowns(JSON.parse(saved));
-    }
-  }, []);
-
-  if (isUserLoading) {
-    return (
-      <div className="flex flex-col min-h-screen bg-[#0f1117] items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!user) return null;
 
   const signals = [
     { id: "green", label: "Feeling Stable", color: "bg-[#14b8a6]" },
@@ -98,10 +75,10 @@ export default function Dashboard() {
   ];
 
   const handleSignalChange = (newSignal: string) => {
-    if (!db || !user) return;
+    if (!db) return;
     const oldSignal = signal;
     
-    const userRef = doc(db, "users", user.uid);
+    const userRef = doc(db, "users", userId);
     updateDoc(userRef, { 
       currentSignal: newSignal,
       updatedAt: serverTimestamp() 
@@ -126,28 +103,10 @@ export default function Dashboard() {
     });
   };
 
-  const handleCrisisAlert = (id: string, label: string) => {
-    const now = Date.now();
-    const lastActive = cooldowns[id] || 0;
-    const thirtyMinutes = 30 * 60 * 1000;
-
-    if (now - lastActive < thirtyMinutes) {
-      const remaining = Math.ceil((thirtyMinutes - (now - lastActive)) / (60 * 1000));
-      toast({
-        title: "Button on Cooldown",
-        description: `You can send another ${label} alert in ${remaining} minutes.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const newCooldowns = { ...cooldowns, [id]: now };
-    setCooldowns(newCooldowns);
-    localStorage.setItem("crisis_cooldowns", JSON.stringify(newCooldowns));
-
+  const handleCrisisAlert = (label: string) => {
     toast({
-      title: "Alert Sent to Partner",
-      description: `Your partner has been notified: "${label}"`,
+      title: "Alert Simulated",
+      description: `In a real scenario, your partner would be notified: "${label}"`,
       className: "bg-[#14b8a6] text-white border-none font-bold",
     });
   };
@@ -159,13 +118,11 @@ export default function Dashboard() {
   ];
 
   const activeSignal = signals.find((s) => s.id === signal);
-
   const avgIntensity = episodes?.length 
     ? (episodes.reduce((acc, ep) => acc + (ep.intensity || 0), 0) / episodes.length).toFixed(1)
     : "0.0";
 
   const latestWin = recentWins?.[0];
-  const latestAiInsight = episodes?.find(e => e.aiInsights)?.aiInsights;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0f1117]">
@@ -174,7 +131,7 @@ export default function Dashboard() {
       <main className="flex-1 px-4 pt-20 pb-32 space-y-6">
         <div className="pt-4 text-left">
           <h2 className="text-3xl font-black text-white mb-1 tracking-tighter uppercase leading-none">
-            Welcome, {user?.displayName || user?.email?.split('@')[0]}
+            Welcome, {displayName}
           </h2>
           <p className="text-gray-500 text-sm font-black uppercase tracking-widest mt-2">Emotional Status</p>
         </div>
@@ -211,7 +168,7 @@ export default function Dashboard() {
           {alertPills.map((pill) => (
             <button
               key={pill.id}
-              onClick={() => handleCrisisAlert(pill.id, pill.label)}
+              onClick={() => handleCrisisAlert(pill.label)}
               className={cn(
                 "h-20 rounded-3xl border-none text-white font-bold flex flex-col gap-1 items-center justify-center transition-transform active:scale-95 shadow-xl px-2 text-center",
                 pill.color,
@@ -224,23 +181,6 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {latestAiInsight && (
-          <Card 
-            className="bg-primary/5 border-primary/30 rounded-[2rem] p-6 shadow-xl cursor-pointer active:scale-[0.98] transition-transform"
-            onClick={() => router.push("/wellness")}
-          >
-            <CardContent className="p-0">
-              <div className="flex items-center gap-2 mb-3">
-                <BrainCircuit className="h-4 w-4 text-primary" />
-                <p className="text-[10px] font-black text-primary uppercase tracking-widest">Recent AI Insight</p>
-              </div>
-              <p className="text-xs text-gray-300 italic leading-relaxed font-medium">
-                "{latestAiInsight.insight}"
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
         <Card className="bg-[#1f2937] border-[#374151] rounded-[2.5rem] p-8 overflow-hidden relative shadow-2xl">
           <div className="absolute -top-6 -right-6 p-8 opacity-5">
             <Sparkles className="h-48 w-48 text-white" />
@@ -252,14 +192,6 @@ export default function Dashboard() {
                 {loadingEpisodes ? "--" : avgIntensity}
               </span>
               <span className="text-gray-400 text-xl font-medium">/ 10</span>
-            </div>
-            
-            <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <History className="h-3 w-3 text-muted-foreground" />
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Recent Entries</span>
-              </div>
-              <span className="text-lg font-black text-[#a855f7]">{episodes?.length || 0}</span>
             </div>
           </CardContent>
         </Card>
@@ -285,7 +217,7 @@ export default function Dashboard() {
                 "{latestWin.text}"
               </p>
             ) : (
-              <p className="text-gray-500 text-sm italic">No wins logged recently. Share some love!</p>
+              <p className="text-gray-500 text-sm italic">No wins logged recently.</p>
             )}
           </CardContent>
         </Card>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileHeader } from "@/components/mobile-header";
 import { 
@@ -22,16 +22,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, updateDoc, doc, increment } from "firebase/firestore";
 import { format } from "date-fns";
-import { errorEmitter } from "@/firebase/error-emitter";
-import { FirestorePermissionError } from "@/firebase/errors";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export default function ForumsPage() {
-  const { user, loading: isUserLoading } = useUser();
+  const { user } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
-  const router = useRouter();
   
   const [isPosting, setIsPosting] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -39,31 +36,28 @@ export default function ForumsPage() {
   const [category, setCategory] = useState("General");
   const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push("/login");
-    }
-  }, [user, isUserLoading, router]);
+  const userId = user?.uid || "guest_user";
+  const userDisplayName = user?.displayName || user?.email?.split('@')[0] || "Guest";
 
   const postsQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
+    if (!db) return null;
     return query(
       collection(db, "forum-posts"),
       orderBy("createdAt", "desc"),
       limit(20)
     );
-  }, [db, user]);
+  }, [db]);
 
   const { data: posts, isLoading: postsLoading } = useCollection(postsQuery);
 
   const handleCreatePost = async () => {
-    if (!db || !user || !newTitle.trim() || !newContent.trim()) return;
+    if (!db || !newTitle.trim() || !newContent.trim()) return;
     setIsSaving(true);
 
     const data = {
-      userId: user.uid,
-      userDisplayName: user.displayName || (user.isAnonymous ? "Guest" : user.email?.split('@')[0]) || "Anonymous",
-      userPhotoUrl: user.photoURL || "",
+      userId: userId,
+      userDisplayName: userDisplayName,
+      userPhotoUrl: user?.photoURL || "",
       title: newTitle.trim(),
       content: newContent.trim(),
       category,
@@ -81,51 +75,27 @@ export default function ForumsPage() {
           description: "Your discussion has been shared with the community."
         });
       })
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: "forum-posts",
-          operation: "create",
-          requestResourceData: data,
-        });
-        errorEmitter.emit("permission-error", permissionError);
-      })
       .finally(() => {
         setIsSaving(false);
       });
   };
 
   const handleLike = (id: string) => {
-    if (!db || !user) return;
+    if (!db) return;
     const postRef = doc(db, "forum-posts", id);
     updateDoc(postRef, {
       likes: increment(1)
-    }).catch(async (error) => {
-      const permissionError = new FirestorePermissionError({
-        path: postRef.path,
-        operation: "update",
-      });
-      errorEmitter.emit("permission-error", permissionError);
     });
   };
-
-  if (isUserLoading) {
-    return (
-      <div className="flex flex-col min-h-screen bg-[#0f1117] items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!user) return null;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0f1117]">
       <MobileHeader />
 
-      <main className="flex-1 px-4 pt-20 pb-32 space-y-6 text-white text-body">
+      <main className="flex-1 px-4 pt-20 pb-32 space-y-6 text-white">
         <div className="pt-4 flex justify-between items-center text-left">
           <div>
-            <h2 className="text-2xl font-black tracking-tighter uppercase tracking-widest">Community</h2>
+            <h2 className="text-2xl font-black uppercase tracking-widest">Community</h2>
             <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">Global Discussion</p>
           </div>
           <Dialog open={isPosting} onOpenChange={setIsPosting}>
@@ -198,7 +168,7 @@ export default function ForumsPage() {
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
             </div>
           ) : posts?.map((post: any) => (
-            <Card key={post.id} className="bg-[#1f2937] border-[#374151] rounded-[2rem] overflow-hidden shadow-xl active:scale-[0.98] transition-all">
+            <Card key={post.id} className="bg-[#1f2937] border-[#374151] rounded-[2rem] overflow-hidden shadow-xl">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <Avatar className="h-8 w-8 border border-white/10">
@@ -242,14 +212,6 @@ export default function ForumsPage() {
               </CardContent>
             </Card>
           ))}
-
-          {!postsLoading && posts?.length === 0 && (
-            <div className="text-center py-20 bg-[#111827] rounded-[2.5rem] border border-dashed border-[#374151]">
-              <Users className="h-12 w-12 text-gray-800 mx-auto mb-4" />
-              <p className="text-sm font-bold text-gray-500 uppercase tracking-[0.2em]">The forums are quiet</p>
-              <p className="text-[10px] text-gray-700 mt-1 uppercase">Be the first to start a conversation</p>
-            </div>
-          )}
         </div>
       </main>
 

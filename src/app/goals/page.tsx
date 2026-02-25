@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileHeader } from "@/components/mobile-header";
 import { Plus, Target, Users, MoreHorizontal, CheckCircle, Trash2, Loader2 } from "lucide-react";
@@ -26,15 +26,11 @@ import {
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, deleteDoc, doc, query, where, orderBy, serverTimestamp, updateDoc } from "firebase/firestore";
 import { cn } from "@/lib/utils";
-import { errorEmitter } from "@/firebase/error-emitter";
-import { FirestorePermissionError } from "@/firebase/errors";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
 
 export default function Goals() {
-  const { user, loading: isUserLoading } = useUser();
+  const { user } = useUser();
   const db = useFirestore();
-  const router = useRouter();
   const { toast } = useToast();
   
   const [tab, setTab] = useState("personal");
@@ -45,20 +41,16 @@ export default function Goals() {
   const [newCategory, setNewCategory] = useState("General");
   const [isShared, setIsShared] = useState(false);
 
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push("/login");
-    }
-  }, [user, isUserLoading, router]);
+  const userId = user?.uid || "guest_user";
 
   const goalsQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
+    if (!db) return null;
     return query(
       collection(db, "goals"),
-      where("userId", "==", user.uid),
+      where("userId", "==", userId),
       orderBy("createdAt", "desc")
     );
-  }, [db, user]);
+  }, [db, userId]);
 
   const { data: goals, isLoading: loading } = useCollection(goalsQuery);
 
@@ -67,11 +59,11 @@ export default function Goals() {
   ) || [];
 
   const handleCreateGoal = async () => {
-    if (!db || !user || !newTitle.trim()) return;
+    if (!db || !newTitle.trim()) return;
     setIsSaving(true);
 
     const goalData = {
-      userId: user.uid,
+      userId: userId,
       title: newTitle.trim(),
       category: newCategory,
       shared: isShared,
@@ -87,59 +79,28 @@ export default function Goals() {
         setIsAdding(false);
         toast({ title: "Goal set!", description: "Keep chasing your progress." });
       })
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: "goals",
-          operation: "create",
-          requestResourceData: goalData,
-        });
-        errorEmitter.emit("permission-error", permissionError);
+      .catch((error) => {
+        toast({ variant: "destructive", title: "Failed to save goal" });
       })
       .finally(() => setIsSaving(false));
   };
 
   const handleDeleteGoal = (id: string) => {
     if (!db) return;
-    const goalRef = doc(db, "goals", id);
-    deleteDoc(goalRef)
+    deleteDoc(doc(db, "goals", id))
       .then(() => {
         toast({ title: "Goal removed" });
-      })
-      .catch(async () => {
-        const permissionError = new FirestorePermissionError({
-          path: goalRef.path,
-          operation: "delete",
-        });
-        errorEmitter.emit("permission-error", permissionError);
       });
   };
 
   const handleUpdateProgress = (id: string, currentProgress: number, increment: number) => {
     if (!db) return;
     const newProgress = Math.max(0, Math.min(100, (currentProgress || 0) + increment));
-    const goalRef = doc(db, "goals", id);
-    updateDoc(goalRef, { 
+    updateDoc(doc(db, "goals", id), { 
       progress: newProgress,
       updatedAt: serverTimestamp() 
-    }).catch(async () => {
-      const permissionError = new FirestorePermissionError({
-        path: goalRef.path,
-        operation: "update",
-        requestResourceData: { progress: newProgress },
-      });
-      errorEmitter.emit("permission-error", permissionError);
     });
   };
-
-  if (isUserLoading) {
-    return (
-      <div className="flex flex-col min-h-screen bg-[#0f1117] items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!user) return null;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0f1117]">
@@ -185,7 +146,7 @@ export default function Goals() {
                     onChange={(e) => setIsShared(e.target.checked)}
                     className="h-4 w-4 accent-primary" 
                   />
-                  <Label htmlFor="shared" className="text-xs text-gray-300">Share this goal with my partner</Label>
+                  <Label htmlFor="shared" className="text-xs text-gray-300">Share this goal</Label>
                 </div>
               </div>
               <DialogFooter>
@@ -301,7 +262,6 @@ export default function Goals() {
             <div className="text-center py-20 bg-[#111827] rounded-[2.5rem] border border-dashed border-[#374151]">
               <Target className="h-12 w-12 text-gray-800 mx-auto mb-4" />
               <p className="text-sm font-bold text-gray-500 uppercase tracking-[0.2em]">No goals yet</p>
-              <p className="text-[10px] text-gray-700 mt-1 uppercase">Start manifesting your progress</p>
             </div>
           )}
         </div>
