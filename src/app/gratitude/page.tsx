@@ -6,7 +6,7 @@ import { MobileHeader } from "@/components/mobile-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Heart, Send, History, Loader2, AlertCircle } from "lucide-react";
+import { Heart, Send, History, Loader2 } from "lucide-react";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp, query, where, orderBy, limit } from "firebase/firestore";
 import { format } from "date-fns";

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileHeader } from "@/components/mobile-header";
-import { Plus, Target, Users, MoreHorizontal, CheckCircle, Trash2, Loader2, AlertCircle } from "lucide-react";
+import { Plus, Target, Users, MoreHorizontal, CheckCircle, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -23,9 +23,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useUser, useFirestore, useCollection, useMemoFirebase, useAuth } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, deleteDoc, doc, query, where, orderBy, serverTimestamp, updateDoc } from "firebase/firestore";
-import { signInAnonymously } from "firebase/auth";
 import { cn } from "@/lib/utils";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
@@ -34,7 +33,6 @@ import { useRouter } from "next/navigation";
 
 export default function Goals() {
   const { user, loading: isUserLoading } = useUser();
-  const auth = useAuth();
   const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
@@ -47,7 +45,6 @@ export default function Goals() {
   const [newCategory, setNewCategory] = useState("General");
   const [isShared, setIsShared] = useState(false);
 
-  // Guard against unauthenticated access
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push("/login");
@@ -119,7 +116,7 @@ export default function Goals() {
 
   const handleUpdateProgress = (id: string, currentProgress: number, increment: number) => {
     if (!db) return;
-    const newProgress = Math.max(0, Math.min(100, currentProgress + increment));
+    const newProgress = Math.max(0, Math.min(100, (currentProgress || 0) + increment));
     const goalRef = doc(db, "goals", id);
     updateDoc(goalRef, { 
       progress: newProgress,
@@ -132,10 +129,6 @@ export default function Goals() {
       });
       errorEmitter.emit("permission-error", permissionError);
     });
-  };
-
-  const handleSignIn = () => {
-    signInAnonymously(auth);
   };
 
   if (isUserLoading) {
@@ -235,7 +228,7 @@ export default function Goals() {
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
             </div>
           ) : filteredGoals.map((goal: any) => (
-            <Card key={goal.id} className="bg-[#1f2937] border-[#374151] rounded-3xl p-6 shadow-xl transition-all">
+            <Card key={goal.id} className="bg-[#1f2937] border-[#374151] rounded-3xl p-6 shadow-xl">
               <CardContent className="p-0 space-y-4">
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
@@ -266,9 +259,9 @@ export default function Goals() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
                     <span className="text-gray-400">Progress</span>
-                    <span className="text-[#a855f7]">{goal.progress}%</span>
+                    <span className="text-[#a855f7]">{goal.progress || 0}%</span>
                   </div>
-                  <Progress value={goal.progress} className="h-1.5 bg-[#111827]" />
+                  <Progress value={goal.progress || 0} className="h-1.5 bg-[#111827]" />
                 </div>
 
                 <div className="flex gap-2 pt-2">
@@ -294,7 +287,7 @@ export default function Goals() {
                     onClick={() => handleUpdateProgress(goal.id, 0, 100)}
                     className={cn(
                       "h-9 w-9 rounded-xl transition-all",
-                      goal.progress >= 100 ? "bg-green-500 text-white" : "bg-[#14b8a6]/10 text-[#14b8a6]"
+                      (goal.progress || 0) >= 100 ? "bg-green-500 text-white" : "bg-[#14b8a6]/10 text-[#14b8a6]"
                     )}
                   >
                     <CheckCircle className="h-5 w-5" />

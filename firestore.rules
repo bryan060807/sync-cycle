@@ -20,60 +20,49 @@ service cloud.firestore {
       allow write: if isOwner(userId);
     }
 
-    // Personal Data Collections (Episodes, Gratitude, Health, Meds, Lists, Notifications)
-    // These follow a strict ownership pattern.
+    // Generic rule for personal data collections
+    // This covers: episodes, gratitude, goals, health-metrics, medications, lists, notifications
     match /episodes/{id} {
-      allow read, write: if isSignedIn() && (
-        (resource == null && request.resource.data.userId == request.auth.uid) ||
-        (resource != null && resource.data.userId == request.auth.uid)
-      );
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     match /gratitude/{id} {
-      allow read, write: if isSignedIn() && (
-        (resource == null && request.resource.data.userId == request.auth.uid) ||
-        (resource != null && resource.data.userId == request.auth.uid)
-      );
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /goals/{id} {
+      // Allow reading if owner OR if shared (shared goals still need a userId for the query)
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.shared == true);
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     match /health-metrics/{id} {
-      allow read, write: if isSignedIn() && (
-        (resource == null && request.resource.data.userId == request.auth.uid) ||
-        (resource != null && resource.data.userId == request.auth.uid)
-      );
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     match /medications/{id} {
-      allow read, write: if isSignedIn() && (
-        (resource == null && request.resource.data.userId == request.auth.uid) ||
-        (resource != null && resource.data.userId == request.auth.uid)
-      );
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     match /lists/{id} {
-      allow read, write: if isSignedIn() && (
-        (resource == null && request.resource.data.userId == request.auth.uid) ||
-        (resource != null && resource.data.userId == request.auth.uid)
-      );
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     match /notifications/{id} {
-      allow read, write: if isSignedIn() && (
-        (resource == null && request.resource.data.userId == request.auth.uid) ||
-        (resource != null && resource.data.userId == request.auth.uid)
-      );
-    }
-
-    // Goals: Support for personal and shared goals
-    match /goals/{goalId} {
-      allow read: if isSignedIn() && (
-        resource.data.userId == request.auth.uid || 
-        resource.data.shared == true
-      );
-      allow write: if isSignedIn() && (
-        (resource == null && request.resource.data.userId == request.auth.uid) ||
-        (resource != null && resource.data.userId == request.auth.uid)
-      );
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Forum Posts: Community readable, owner writable
@@ -81,7 +70,6 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
-      // Allow specific updates like likes if we had a more complex setup, but keeping it simple for now
     }
 
     // Partner Invites

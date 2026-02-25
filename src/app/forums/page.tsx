@@ -144,7 +144,10 @@ export default function ForumsPage() {
                     <Badge 
                       key={cat}
                       onClick={() => setCategory(cat)}
-                      className={category === cat ? "bg-primary text-white cursor-pointer" : "bg-[#111827] text-gray-500 cursor-pointer"}
+                      className={cn(
+                        "cursor-pointer px-3 py-1 transition-colors",
+                        category === cat ? "bg-primary text-white" : "bg-[#111827] text-gray-500"
+                      )}
                     >
                       {cat}
                     </Badge>
