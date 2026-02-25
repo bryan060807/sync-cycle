@@ -1,7 +1,8 @@
+
 "use client";
 
 import React from "react";
-import { Menu, Heart } from "lucide-react";
+import { Menu, Heart, Pill } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,6 +15,7 @@ export function MobileHeader() {
     { icon: <User />, label: "Profile", href: "/settings" },
     { icon: <Activity />, label: "Wellness", href: "/wellness" },
     { icon: <HeartPulse />, label: "Health", href: "/health" },
+    { icon: <Pill />, label: "Medications", href: "/meds" },
     { icon: <Shield />, label: "Crisis Plan", href: "/crisis" },
     { icon: <MessageSquare />, label: "Gratitude", href: "/gratitude" },
     { icon: <Star />, label: "Goals", href: "/goals" },
@@ -78,7 +80,7 @@ export function MobileHeader() {
         <h1 className="text-lg font-bold tracking-tight text-white">SyncCycle</h1>
       </div>
 
-      <div className="w-10" /> {/* Spacer for centering */}
+      <div className="w-10" />
     </header>
   );
 }

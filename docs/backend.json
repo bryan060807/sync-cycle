@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Episode": {
@@ -81,6 +82,20 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "createdAt"]
+    },
+    "Medication": {
+      "title": "Medication",
+      "description": "Prescription and supplement tracking.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the medication." },
+        "dosage": { "type": "string", "description": "Dosage amount (e.g., 20mg)." },
+        "schedule": { "type": "string", "description": "When to take it (e.g., Morning)." },
+        "frequency": { "type": "string", "description": "How often (e.g., Daily)." },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "dosage", "userId", "createdAt"]
     }
   },
   "auth": {
@@ -110,6 +125,10 @@
     "/health-metrics/{metricId}": {
       "schema": "#/entities/HealthMetric",
       "description": "Health data entries."
+    },
+    "/medications/{medicationId}": {
+      "schema": "#/entities/Medication",
+      "description": "User medications and supplements."
     }
   }
 }
