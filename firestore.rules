@@ -17,8 +17,7 @@ service cloud.firestore {
 
     // User Profiles
     match /users/{userId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow read: if isSignedIn();
       allow create, update: if isOwner(userId);
       allow delete: if false;
     }
@@ -36,67 +35,55 @@ service cloud.firestore {
 
     // Emotional Episodes
     match /episodes/{episodeId} {
-      allow get: if isSignedIn() && (
+      allow read: if isSignedIn() && (
         resource.data.userId == request.auth.uid || 
         resource.data.isAnonymized == true
       );
-      // Separate list rules to help Firestore Query engine validation
-      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow list: if isSignedIn() && resource.data.isAnonymized == true;
-      
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Health Metrics
     match /health-metrics/{metricId} {
-      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Medications
     match /medications/{medId} {
-      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Gratitude / Wins
     match /gratitude/{winId} {
-      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Goals
     match /goals/{goalId} {
-      allow get: if isSignedIn() && (
+      allow read: if isSignedIn() && (
         resource.data.userId == request.auth.uid || 
         resource.data.shared == true
       );
-      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow list: if isSignedIn() && resource.data.shared == true;
-
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Notifications
     match /notifications/{notifId} {
-      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Lists & Collections
     match /lists/{listId} {
-      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
@@ -104,13 +91,10 @@ service cloud.firestore {
     // Partner Invites
     match /invites/{inviteId} {
       allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
-      
-      allow get: if isSignedIn() && resource.data.senderId == request.auth.uid;
-      allow get: if isSignedIn() && request.auth.token.email != null && resource.data.receiverEmail == request.auth.token.email;
-      
-      allow list: if isSignedIn() && resource.data.senderId == request.auth.uid;
-      allow list: if isSignedIn() && request.auth.token.email != null && resource.data.receiverEmail == request.auth.token.email;
-      
+      allow read: if isSignedIn() && (
+        resource.data.senderId == request.auth.uid || 
+        (request.auth.token.email != null && resource.data.receiverEmail == request.auth.token.email)
+      );
       allow update: if isSignedIn() && (
         resource.data.senderId == request.auth.uid || 
         (request.auth.token.email != null && resource.data.receiverEmail == request.auth.token.email)
