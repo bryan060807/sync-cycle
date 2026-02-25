@@ -6,7 +6,7 @@ import { MobileHeader } from "@/components/mobile-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Heart, Send, History, Loader2 } from "lucide-react";
+import { Heart, Send, History, Loader2, Sparkles } from "lucide-react";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp, query, where, orderBy, limit } from "firebase/firestore";
 import { format } from "date-fns";
@@ -36,11 +36,11 @@ export default function Gratitude() {
       collection(db, "gratitude"),
       where("userId", "==", user.uid),
       orderBy("createdAt", "desc"),
-      limit(20)
+      limit(50)
     );
   }, [db, user]);
 
-  const { data: archives, isLoading } = useCollection(gratitudeQuery);
+  const { data: archives, isLoading: isLoadingArchives } = useCollection(gratitudeQuery);
 
   const handleSendWin = () => {
     if (!text.trim() || !db || !user) return;
@@ -130,9 +130,9 @@ export default function Gratitude() {
           </div>
 
           <div className="space-y-3">
-            {isLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+            {isLoadingArchives ? (
+              <div className="flex justify-center py-12">
+                <Sparkles className="h-8 w-8 animate-pulse text-yellow-500" />
               </div>
             ) : archives?.map((win: any) => (
               <Card key={win.id} className="bg-[#1f2937] border-[#374151] rounded-3xl p-4 shadow-md transition-transform active:scale-[0.98]">
@@ -149,7 +149,7 @@ export default function Gratitude() {
                 </div>
               </Card>
             ))}
-            {!isLoading && archives?.length === 0 && (
+            {!isLoadingArchives && archives?.length === 0 && (
               <div className="text-center py-12 bg-[#111827] rounded-[2rem] border border-dashed border-[#374151]">
                 <p className="text-gray-700 text-[10px] font-black uppercase tracking-[0.2em]">No wins archived yet</p>
                 <p className="text-[9px] text-gray-800 uppercase mt-1">Start the cycle of praise!</p>
