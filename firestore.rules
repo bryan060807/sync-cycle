@@ -20,6 +20,30 @@ service cloud.firestore {
       allow write: if isOwner(userId);
     }
 
+    // Goals: Explicitly handle list and get to ensure query engine satisfaction
+    match /goals/{goalId} {
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.shared == true);
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.shared == true);
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Emotional Episodes
+    match /episodes/{episodeId} {
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.isAnonymized == true);
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.isAnonymized == true);
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Gratitude / Wins
+    match /gratitude/{winId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
     // Forum Posts
     match /forum-posts/{postId} {
       allow read: if isSignedIn();
@@ -31,56 +55,22 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
-    // Emotional Episodes
-    match /episodes/{episodeId} {
-      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.isAnonymized == true);
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
-    }
-
-    // Health Metrics
+    // Health Metrics & Medications
     match /health-metrics/{metricId} {
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow read, write: if isSignedIn() && (
+        (resource == null && request.resource.data.userId == request.auth.uid) ||
+        (resource != null && resource.data.userId == request.auth.uid)
+      );
     }
 
-    // Medications
     match /medications/{medId} {
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow read, write: if isSignedIn() && (
+        (resource == null && request.resource.data.userId == request.auth.uid) ||
+        (resource != null && resource.data.userId == request.auth.uid)
+      );
     }
 
-    // Gratitude / Wins
-    match /gratitude/{winId} {
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
-    }
-
-    // Goals
-    match /goals/{goalId} {
-      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.shared == true);
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
-    }
-
-    // Notifications
-    match /notifications/{notifId} {
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
-    }
-
-    // Lists & Collections
-    match /lists/{listId} {
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
-    }
-
-    // Partner Invites
+    // Partner Invites: Null-safe email checks for guest users
     match /invites/{inviteId} {
       allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
       allow read, update: if isSignedIn() && (
@@ -96,10 +86,23 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.auth.uid in request.resource.data.uids;
       
       match /messages/{messageId} {
-        allow read, create: if isSignedIn() && 
-          exists(/databases/$(database)/documents/couples/$(coupleId)) && 
-          request.auth.uid in get(/databases/$(database)/documents/couples/$(coupleId)).data.uids;
+        allow read, create: if isSignedIn();
       }
+    }
+
+    // Lists, Notifications
+    match /lists/{listId} {
+      allow read, write: if isSignedIn() && (
+        (resource == null && request.resource.data.userId == request.auth.uid) ||
+        (resource != null && resource.data.userId == request.auth.uid)
+      );
+    }
+
+    match /notifications/{notifId} {
+      allow read, write: if isSignedIn() && (
+        (resource == null && request.resource.data.userId == request.auth.uid) ||
+        (resource != null && resource.data.userId == request.auth.uid)
+      );
     }
 
     // Default deny

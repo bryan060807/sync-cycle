@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "UserProfile": {
@@ -9,12 +8,13 @@
         "id": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "username": { "type": "string" },
-        "partnerId": { "type": "string", "description": "UID of the connected partner." },
-        "coupleId": { "type": "string", "description": "ID of the shared couple document." },
+        "currentSignal": { "type": "string", "enum": ["green", "orange", "red"] },
+        "partnerId": { "type": "string" },
+        "coupleId": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "email", "createdAt", "updatedAt"]
+      "required": ["id", "createdAt"]
     },
     "PartnerInvite": {
       "title": "PartnerInvite",
@@ -28,7 +28,7 @@
         "status": { "type": "string", "enum": ["pending", "accepted", "declined"] },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["senderId", "senderEmail", "receiverEmail", "status", "createdAt"]
+      "required": ["senderId", "receiverEmail", "status", "createdAt"]
     },
     "Couple": {
       "title": "Couple",
@@ -118,71 +118,37 @@
     "providers": ["password", "anonymous"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "UserProfile",
-          "schema": { "$ref": "#/backend/entities/UserProfile" },
-          "description": "User profile data."
-        }
-      },
-      {
-        "path": "/invites/{inviteId}",
-        "definition": {
-          "entityName": "PartnerInvite",
-          "schema": { "$ref": "#/backend/entities/PartnerInvite" },
-          "description": "Global invites collection."
-        }
-      },
-      {
-        "path": "/couples/{coupleId}",
-        "definition": {
-          "entityName": "Couple",
-          "schema": { "$ref": "#/backend/entities/Couple" },
-          "description": "Shared couple data."
-        }
-      },
-      {
-        "path": "/couples/{coupleId}/messages/{messageId}",
-        "definition": {
-          "entityName": "ChatMessage",
-          "schema": { "$ref": "#/backend/entities/ChatMessage" },
-          "description": "Real-time messages for a couple."
-        }
-      },
-      {
-        "path": "/goals/{goalId}",
-        "definition": {
-          "entityName": "Goal",
-          "schema": { "$ref": "#/backend/entities/Goal" },
-          "description": "User goals and habits."
-        }
-      },
-      {
-        "path": "/forum-posts/{postId}",
-        "definition": {
-          "entityName": "ForumPost",
-          "schema": { "$ref": "#/backend/entities/ForumPost" },
-          "description": "Community discussion posts."
-        }
-      },
-      {
-        "path": "/gratitude/{winId}",
-        "definition": {
-          "entityName": "GratitudeWin",
-          "schema": { "$ref": "#/backend/entities/GratitudeWin" },
-          "description": "Daily wins and gratitude entries."
-        }
-      },
-      {
-        "path": "/episodes/{episodeId}",
-        "definition": {
-          "entityName": "EmotionalEpisode",
-          "schema": { "$ref": "#/backend/entities/EmotionalEpisode" },
-          "description": "Emotional tracking logs."
-        }
-      }
-    ]
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile data."
+    },
+    "/invites/{inviteId}": {
+      "schema": "PartnerInvite",
+      "description": "Global invites collection."
+    },
+    "/couples/{coupleId}": {
+      "schema": "Couple",
+      "description": "Shared couple data."
+    },
+    "/couples/{coupleId}/messages/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Real-time messages for a couple."
+    },
+    "/goals/{goalId}": {
+      "schema": "Goal",
+      "description": "User goals and habits."
+    },
+    "/forum-posts/{postId}": {
+      "schema": "ForumPost",
+      "description": "Community discussion posts."
+    },
+    "/gratitude/{winId}": {
+      "schema": "GratitudeWin",
+      "description": "Daily wins and gratitude entries."
+    },
+    "/episodes/{episodeId}": {
+      "schema": "EmotionalEpisode",
+      "description": "Emotional tracking logs."
+    }
   }
 }

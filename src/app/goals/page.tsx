@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileHeader } from "@/components/mobile-header";
-import { Plus, Target, Users, MoreHorizontal, CheckCircle, Trash2, Loader2, Edit2, AlertCircle } from "lucide-react";
+import { Plus, Target, Users, MoreHorizontal, CheckCircle, Trash2, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -41,7 +41,6 @@ export default function Goals() {
   const [isAdding, setIsAdding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // New goal form state
   const [newTitle, setNewTitle] = useState("");
   const [newCategory, setNewCategory] = useState("General");
   const [isShared, setIsShared] = useState(false);
@@ -215,7 +214,6 @@ export default function Goals() {
           </Dialog>
         </div>
 
-        {/* Pill Toggle */}
         <div className="flex p-1 bg-[#1f2937] rounded-full border border-[#374151]">
           <button
             onClick={() => setTab("personal")}

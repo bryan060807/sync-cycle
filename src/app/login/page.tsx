@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -15,7 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth, useUser } from "@/firebase";
 import { 
@@ -25,31 +24,27 @@ import {
 } from "@/firebase/non-blocking-login";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
 
 export default function LoginPage() {
   const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const { user, isUserLoading } = useUser();
+  const { user, loading: isUserLoading } = useUser();
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Automatically redirect when the user state becomes active
   useEffect(() => {
     if (user && !isUserLoading) {
       router.push("/");
     }
   }, [user, isUserLoading, router]);
 
-  const handleAuthAction = (action: () => void, successMessage: string) => {
+  const handleAuthAction = async (action: () => void, successMessage: string) => {
     setIsLoading(true);
     try {
-      action();
-      // We don't await because of the non-blocking pattern guidelines
-      // The onAuthStateChanged listener in FirebaseProvider handles the redirect
+      await action();
       toast({
         title: "Auth Initiated",
         description: successMessage,
@@ -58,12 +53,9 @@ export default function LoginPage() {
       toast({
         variant: "destructive",
         title: "Authentication Error",
-        description: error.message || "Something went wrong.",
+        description: error.message || "Something went wrong. Please check your credentials.",
       });
       setIsLoading(false);
-    } finally {
-      // Small delay to prevent flickering if redirect happens fast
-      setTimeout(() => setIsLoading(false), 2000);
     }
   };
 
