@@ -3,13 +3,17 @@
 import React, { useState } from "react";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileHeader } from "@/components/mobile-header";
-import { Sparkles, Brain, AlertCircle, Zap, ShieldAlert } from "lucide-react";
+import { Sparkles, Brain, AlertCircle, Zap, ShieldAlert, Shield } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
   const [signal, setSignal] = useState("green");
+  const { toast } = useToast();
+  const router = useRouter();
 
   const signals = [
     { id: "green", label: "Feeling Stable", color: "bg-[#14b8a6]" },
@@ -17,10 +21,33 @@ export default function Dashboard() {
     { id: "red", label: "In Crisis / Need Space", color: "bg-[#ef4444]" },
   ];
 
+  const handleSignalChange = (newSignal: string) => {
+    const oldSignal = signal;
+    setSignal(newSignal);
+
+    if (newSignal !== "green" && oldSignal === "green") {
+      toast({
+        title: "Crisis Plan Activated",
+        description: `Your signal is now ${newSignal === 'orange' ? 'Sensitive' : 'Crisis'}. Your safety techniques are ready.`,
+        action: (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="border-white/20 bg-white/10 text-white"
+            onClick={() => router.push("/crisis")}
+          >
+            View Plan
+          </Button>
+        ),
+        className: "bg-[#ef4444] text-white border-none",
+      });
+    }
+  };
+
   const alertPills = [
-    { label: "Crisis", color: "bg-[#f97316]", icon: <ShieldAlert className="h-4 w-4" /> },
-    { label: "Mood", color: "bg-[#ef4444]", icon: <AlertCircle className="h-4 w-4" /> },
-    { label: "Sync", color: "bg-[#8b5cf6]", icon: <Zap className="h-4 w-4" /> },
+    { label: "Crisis", color: "bg-[#f97316]", icon: <ShieldAlert className="h-4 w-4" />, href: "/crisis" },
+    { label: "Mood", color: "bg-[#ef4444]", icon: <AlertCircle className="h-4 w-4" />, href: "/wellness" },
+    { label: "Sync", color: "bg-[#8b5cf6]", icon: <Zap className="h-4 w-4" />, href: "/retro" },
   ];
 
   const activeSignal = signals.find((s) => s.id === signal);
@@ -41,7 +68,7 @@ export default function Dashboard() {
             {signals.map((s) => (
               <button
                 key={s.id}
-                onClick={() => setSignal(s.id)}
+                onClick={() => handleSignalChange(s.id)}
                 className={cn(
                   "h-11 flex-1 rounded-full transition-all duration-300 flex items-center justify-center",
                   signal === s.id ? (
@@ -69,9 +96,11 @@ export default function Dashboard() {
           {alertPills.map((pill) => (
             <Button
               key={pill.label}
+              onClick={() => router.push(pill.href)}
               className={cn(
-                "h-16 rounded-3xl border-none text-white font-bold flex flex-col gap-1 items-center justify-center transition-transform active:scale-95",
-                pill.color
+                "h-16 rounded-3xl border-none text-white font-bold flex flex-col gap-1 items-center justify-center transition-transform active:scale-95 shadow-xl",
+                pill.color,
+                signal !== 'green' && pill.label === 'Crisis' && "ring-4 ring-white/20 animate-pulse"
               )}
             >
               {pill.icon}
