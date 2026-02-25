@@ -13,7 +13,11 @@ import {
   ShoppingCart,
   CheckCircle2,
   Circle,
-  X
+  X,
+  Phone,
+  Calendar,
+  Zap,
+  Tag
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, deleteDoc, doc, query, where, orderBy, serverTimestamp, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
+import { cn } from "@/lib/utils";
 
 export default function ListsPage() {
   const { user } = useUser();
@@ -39,13 +44,12 @@ export default function ListsPage() {
 
   const { data: lists, loading } = useCollection(listsQuery);
 
-  const handleCreateList = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!db || !user || !newListName.trim()) return;
+  const handleCreateList = async (name: string) => {
+    if (!db || !user || !name.trim()) return;
 
     setIsAdding(true);
     addDoc(collection(db, "lists"), {
-      name: newListName.trim(),
+      name: name.trim(),
       userId: user.uid,
       items: [],
       createdAt: serverTimestamp()
@@ -59,6 +63,13 @@ export default function ListsPage() {
     deleteDoc(doc(db, "lists", id));
   };
 
+  const templates = [
+    { name: "Grocery List", icon: <ShoppingCart className="h-4 w-4" />, color: "text-orange-500" },
+    { name: "Errands", icon: <Zap className="h-4 w-4" />, color: "text-yellow-500" },
+    { name: "Calls to Make", icon: <Phone className="h-4 w-4" />, color: "text-blue-500" },
+    { name: "Weekly Schedule", icon: <Calendar className="h-4 w-4" />, color: "text-purple-500" },
+  ];
+
   return (
     <div className="flex flex-col min-h-screen bg-[#0f1117]">
       <MobileHeader />
@@ -66,14 +77,39 @@ export default function ListsPage() {
       <main className="flex-1 px-4 pt-20 pb-24 space-y-6">
         <div className="pt-4">
           <h2 className="text-2xl font-bold text-white tracking-tight">Collections</h2>
-          <p className="text-gray-500 text-sm mt-1">Groceries, tasks, and shared lists.</p>
+          <p className="text-gray-500 text-sm mt-1">Groceries, errands, schedules, and more.</p>
+        </div>
+
+        {/* Templates */}
+        <div className="space-y-3">
+          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Quick Templates</p>
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+            {templates.map((t) => (
+              <Button 
+                key={t.name}
+                variant="outline" 
+                size="sm"
+                className="rounded-xl border-[#374151] bg-[#1f2937] text-white hover:bg-[#374151] shrink-0 h-10 px-4"
+                onClick={() => handleCreateList(t.name)}
+              >
+                <span className={cn("mr-2", t.color)}>{t.icon}</span>
+                {t.name}
+              </Button>
+            ))}
+          </div>
         </div>
 
         {/* Create List Form */}
         <Card className="bg-[#1f2937] border-[#374151] rounded-2xl overflow-hidden shadow-xl">
-          <form onSubmit={handleCreateList} className="flex p-2 gap-2">
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleCreateList(newListName);
+            }} 
+            className="flex p-2 gap-2"
+          >
             <Input 
-              placeholder="e.g. Weekly Groceries" 
+              placeholder="Create custom list..." 
               className="bg-transparent border-none shadow-none focus-visible:ring-0 text-white placeholder:text-gray-600 h-12"
               value={newListName}
               onChange={(e) => setNewListName(e.target.value)}
@@ -81,7 +117,7 @@ export default function ListsPage() {
             <Button 
               type="submit" 
               size="icon" 
-              className="bg-orange-500 hover:bg-orange-600 rounded-xl h-12 w-12 shrink-0"
+              className="bg-primary hover:bg-primary/90 rounded-xl h-12 w-12 shrink-0"
               disabled={isAdding || !newListName.trim()}
             >
               {isAdding ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}
@@ -91,9 +127,10 @@ export default function ListsPage() {
 
         {/* Lists Grid */}
         <div className="space-y-4">
+          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Active Lists</p>
           {loading ? (
             <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : lists?.map((list: any) => (
             <ListCard key={list.id} list={list} onDelete={() => handleDeleteList(list.id)} />
@@ -101,9 +138,9 @@ export default function ListsPage() {
           
           {!loading && lists?.length === 0 && (
             <div className="text-center py-20 bg-[#111827] rounded-3xl border border-dashed border-[#374151]">
-              <ShoppingCart className="h-12 w-12 text-gray-700 mx-auto mb-4" />
+              <Tag className="h-12 w-12 text-gray-700 mx-auto mb-4" />
               <p className="text-sm font-bold text-gray-500">Your collections are empty.</p>
-              <p className="text-[10px] text-gray-600 mt-1 uppercase tracking-widest">Create your first list</p>
+              <p className="text-[10px] text-gray-600 mt-1 uppercase tracking-widest">Use a template to get started</p>
             </div>
           )}
         </div>
@@ -140,14 +177,23 @@ function ListCard({ list, onDelete }: { list: any, onDelete: () => void }) {
     });
   };
 
+  const getIcon = (name: string) => {
+    const lower = name.toLowerCase();
+    if (lower.includes('grocery')) return <ShoppingCart className="h-6 w-6 text-orange-500" />;
+    if (lower.includes('errand')) return <Zap className="h-6 w-6 text-yellow-500" />;
+    if (lower.includes('call')) return <Phone className="h-6 w-6 text-blue-500" />;
+    if (lower.includes('schedule') || lower.includes('week')) return <Calendar className="h-6 w-6 text-purple-500" />;
+    return <ListChecks className="h-6 w-6 text-primary" />;
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Card className="bg-[#1f2937] border-[#374151] rounded-3xl shadow-xl active:scale-[0.98] transition-transform cursor-pointer group">
           <CardContent className="p-5 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-orange-500/10 rounded-2xl">
-                <ListChecks className="h-6 w-6 text-orange-500" />
+              <div className="p-3 bg-white/5 rounded-2xl">
+                {getIcon(list.name)}
               </div>
               <div>
                 <h3 className="text-lg font-bold text-white tracking-tight">{list.name}</h3>
@@ -156,7 +202,7 @@ function ListCard({ list, onDelete }: { list: any, onDelete: () => void }) {
                 </p>
               </div>
             </div>
-            <ChevronRight className="h-5 w-5 text-gray-700 group-hover:text-orange-500 transition-colors" />
+            <ChevronRight className="h-5 w-5 text-gray-700 group-hover:text-primary transition-colors" />
           </CardContent>
         </Card>
       </DialogTrigger>
@@ -179,7 +225,7 @@ function ListCard({ list, onDelete }: { list: any, onDelete: () => void }) {
         <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto no-scrollbar">
           <form onSubmit={handleAddItem} className="flex gap-2 bg-[#111827] p-2 rounded-2xl border border-[#374151]/50 shadow-inner">
             <Input 
-              placeholder="Add item..." 
+              placeholder="Add task or item..." 
               value={newItem}
               onChange={(e) => setNewItem(e.target.value)}
               className="bg-transparent border-none focus-visible:ring-0 text-white placeholder:text-gray-600"
@@ -188,7 +234,7 @@ function ListCard({ list, onDelete }: { list: any, onDelete: () => void }) {
               type="submit" 
               size="icon" 
               disabled={isAddingItem || !newItem.trim()}
-              className="bg-orange-500 hover:bg-orange-600 rounded-xl shrink-0"
+              className="bg-primary hover:bg-primary/90 rounded-xl shrink-0"
             >
               {isAddingItem ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
             </Button>
@@ -201,7 +247,7 @@ function ListCard({ list, onDelete }: { list: any, onDelete: () => void }) {
                 className="flex items-center justify-between p-4 bg-[#1f2937] rounded-2xl border border-[#374151]/30 group"
               >
                 <div className="flex items-center gap-3">
-                  <Circle className="h-4 w-4 text-gray-600" />
+                  <div className="h-2 w-2 rounded-full bg-primary/40" />
                   <span className="text-sm font-medium text-gray-200">{item}</span>
                 </div>
                 <Button 
